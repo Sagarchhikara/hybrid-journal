@@ -8,6 +8,12 @@ export interface FormScreenProps {
   children: ReactNode;
   /** Pinned below the scroll area and above the keyboard — usually the save button. */
   footer?: ReactNode;
+  /**
+   * iOS only: lets the scroll view inset itself for the keyboard, which keeps a focused
+   * input near the bottom of a long form visible. Off by default so the Phase 1 forms,
+   * which are short enough not to need it, keep their existing behaviour.
+   */
+  adjustKeyboardInsets?: boolean;
 }
 
 /**
@@ -15,7 +21,7 @@ export interface FormScreenProps {
  * small screen, which is the difference between logging a run in 20 seconds and
  * scrolling around hunting for Save.
  */
-export function FormScreen({ children, footer }: FormScreenProps) {
+export function FormScreen({ children, footer, adjustKeyboardInsets = false }: FormScreenProps) {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -27,7 +33,8 @@ export function FormScreen({ children, footer }: FormScreenProps) {
         style={styles.fill}
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl }}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive">
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={adjustKeyboardInsets}>
         {children}
       </ScrollView>
 

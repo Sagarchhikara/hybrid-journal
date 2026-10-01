@@ -19,7 +19,7 @@ function presentation(entry: HistoryEntry): { icon: IconName; color: ColorToken;
       return {
         icon: 'gym',
         color: 'gym',
-        href: `/log/gym?workoutId=${entry.workout.workoutId}`,
+        href: `/log/gym/session?workoutId=${entry.workout.workoutId}`,
       };
     case 'run':
       return { icon: 'run', color: 'run', href: `/log/run?runId=${entry.run.id}` };
