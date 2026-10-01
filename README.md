@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# Hybrid Training Journal
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A local-first training journal for people who lift and run. Log gym workouts, runs and
+sleep; see history, a dashboard, an activity heatmap and descriptive insights.
 
-## Get started
+It is a journal and a dashboard — not a coach or a planner. No backend, no accounts, no
+sync. All data lives on-device in SQLite.
 
-1. Install dependencies
+## Status: Phase 0 (foundation)
 
-   ```bash
-   npm install
-   ```
+The shell, theme, database and dev tooling exist. Logging forms, charts, the heatmap and
+insights are placeholders.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Running it
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Scan the QR code with **Expo Go** on a physical device. No development build is needed:
+`expo-sqlite` and `react-native-svg` are both bundled in Expo Go, and Drizzle's migration
+bundling is a build-time Babel transform rather than native code.
 
-### Other setup steps
+| Script                | Purpose                                                        |
+| --------------------- | -------------------------------------------------------------- |
+| `npm run typecheck`   | `tsc --noEmit`                                                 |
+| `npm run lint`        | ESLint                                                         |
+| `npm run format`      | Prettier, write                                                |
+| `npm run db:generate` | Regenerate Drizzle migrations after editing `src/db/schema.ts` |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Layout
 
-## Learn more
+```
+src/
+  app/            Expo Router routes — (tabs) group + log/ modal stack
+  db/             schema, client, migrations, seeds, query hooks
+  components/     Screen, Text, Card, Button, Icon
+  theme/          colour / spacing / radii / typography tokens
+  lib/            date and unit helpers
+  features/       gym, runs, sleep, insights — empty until later phases
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Two rules that matter
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**Dates are local calendar strings.** Every `date` column is `'YYYY-MM-DD'` text, never a
+UTC timestamp. Streaks and weekly rollups are calendar questions; storing an instant would
+shift entries across midnight when the user changes time zone. Use the helpers in
+`src/lib/dates.ts` — in particular never `new Date('2026-10-01')`, which parses as UTC
+midnight.
 
-## Join the community
+**Pace is derived, never stored.** `runs` holds `distance_km` and `duration_sec`;
+`formatPace()` in `src/lib/units.ts` does the division at read time.
 
-Join our community of developers creating universal apps.
+## Dev tooling
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+In a dev build, the **You** tab gains a Developer section that seeds three weeks of
+plausible workouts, runs, sleep and daily metrics, or clears everything. Both are gated
+behind `__DEV__`. The Home tab's counts come from Drizzle live queries, so they update the
+instant anything is written.
