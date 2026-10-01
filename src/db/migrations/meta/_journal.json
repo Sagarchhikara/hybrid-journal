@@ -15,6 +15,13 @@
       "when": 1790830248360,
       "tag": "0001_app_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790834812134,
+      "tag": "0002_gym_recall",
+      "breakpoints": true
     }
   ]
 }

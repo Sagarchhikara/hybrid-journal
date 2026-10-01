@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Icon, Text, type IconName } from '@/components';
+import { deleteWorkout } from '@/db/queries/gym';
 import { deleteRun } from '@/db/queries/runs';
 import { clearDailyMetricField } from '@/db/queries/metrics';
 import { deleteSleep } from '@/db/queries/sleep';
@@ -14,6 +15,12 @@ import { historyEntryTitle, summarizeHistoryEntry } from './summarize';
 /** Icon, accent colour and edit route for each kind, in one place. */
 function presentation(entry: HistoryEntry): { icon: IconName; color: ColorToken; href: Href } {
   switch (entry.kind) {
+    case 'gym':
+      return {
+        icon: 'gym',
+        color: 'gym',
+        href: `/log/gym?workoutId=${entry.workout.workoutId}`,
+      };
     case 'run':
       return { icon: 'run', color: 'run', href: `/log/run?runId=${entry.run.id}` };
     case 'sleep':
@@ -27,6 +34,8 @@ function presentation(entry: HistoryEntry): { icon: IconName; color: ColorToken;
 
 function remove(entry: HistoryEntry): Promise<void> {
   switch (entry.kind) {
+    case 'gym':
+      return deleteWorkout(entry.workout.workoutId);
     case 'run':
       return deleteRun(entry.run.id);
     case 'sleep':

@@ -117,3 +117,56 @@ describe('aggregate decoding', () => {
     expect(Number.isNaN(summary.totalRunKm as number)).toBe(false);
   });
 });
+
+describe('workout count', () => {
+  async function workoutOn(date: string): Promise<void> {
+    const { saveWorkout } = await import('@/db/queries/gym');
+    const { seedExerciseLibrary } = await import('@/db/seed');
+    const { db } = await import('@/db/client');
+    const { exercises } = await import('@/db/schema');
+
+    await seedExerciseLibrary();
+    const [first] = await db.select({ id: exercises.id }).from(exercises).limit(1);
+    await saveWorkout({
+      date,
+      name: 'Push',
+      notes: null,
+      exercises: [
+        { exerciseId: first!.id, sortOrder: 0, sets: [{ weightKg: 80, reps: 8, setOrder: 0 }] },
+      ],
+    });
+  }
+
+  it('is null when nothing is logged, matching the other fields', async () => {
+    expect((await getWeekSummary(MID_WEEK)).workoutCount).toBeNull();
+  });
+
+  it('counts workouts inside the Monday-to-Sunday week', async () => {
+    await workoutOn('2026-09-28');
+    await workoutOn('2026-09-30');
+    await workoutOn('2026-10-04');
+
+    expect((await getWeekSummary(MID_WEEK)).workoutCount).toBe(3);
+  });
+
+  it('excludes the Sunday before and the Monday after', async () => {
+    await workoutOn('2026-09-27');
+    await workoutOn('2026-10-05');
+    await workoutOn('2026-09-30');
+
+    expect((await getWeekSummary(MID_WEEK)).workoutCount).toBe(1);
+  });
+
+  it('counts two workouts on one date separately', async () => {
+    await workoutOn('2026-09-30');
+    await workoutOn('2026-09-30');
+
+    expect((await getWeekSummary(MID_WEEK)).workoutCount).toBe(2);
+  });
+
+  it('is a number, not a string, so it never concatenates', async () => {
+    await workoutOn('2026-09-30');
+    const summary = await getWeekSummary(MID_WEEK);
+    expect(typeof summary.workoutCount).toBe('number');
+  });
+});

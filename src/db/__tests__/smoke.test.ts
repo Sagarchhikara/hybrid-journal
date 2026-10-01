@@ -8,8 +8,24 @@ import { appliedMigrationFiles, applyMigrations } from './support/test-db';
 beforeAll(applyMigrations);
 
 describe('shim wiring', () => {
-  it('applies both migrations', () => {
-    expect(appliedMigrationFiles()).toEqual(['0000_init.sql', '0001_app_settings.sql']);
+  it('registers every migration file in the journal, in order', async () => {
+    const files = appliedMigrationFiles();
+    const journal = (await import('../migrations/meta/_journal.json')).default;
+
+    // Catches a migration generated but never wired into migrations.js, which would
+    // apply in tests and silently not apply on a device.
+    expect(files.length).toBe(journal.entries.length);
+    expect(files.map((file) => file.replace(/\.sql$/, ''))).toEqual(
+      journal.entries.map((entry) => entry.tag),
+    );
+    expect(files.map((file) => file.slice(0, 4))).toEqual(
+      [...files.map((file) => file.slice(0, 4))].sort(),
+    );
+  });
+
+  it('includes the migrations the earlier phases added', () => {
+    expect(appliedMigrationFiles()).toContain('0000_init.sql');
+    expect(appliedMigrationFiles()).toContain('0001_app_settings.sql');
   });
 
   it('round-trips an insert through the real drizzle query builder', async () => {

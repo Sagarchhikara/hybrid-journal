@@ -13,19 +13,26 @@ export function normalizeExerciseName(name: string): string {
  * The starter library, inserted once on first launch. Users add their own on top
  * (those get `is_custom = true`), so this list only needs to cover the common lifts.
  */
-export const STARTER_EXERCISES: { name: string; muscleGroup: MuscleGroup }[] = [
+export interface StarterExercise {
+  name: string;
+  muscleGroup: MuscleGroup;
+  /** See the `is_bodyweight` comment in schema.ts. Mirrored by the 0002 backfill. */
+  isBodyweight?: boolean;
+}
+
+export const STARTER_EXERCISES: StarterExercise[] = [
   // Chest
   { name: 'Barbell Bench Press', muscleGroup: 'chest' },
   { name: 'Incline Barbell Bench Press', muscleGroup: 'chest' },
   { name: 'Dumbbell Bench Press', muscleGroup: 'chest' },
   { name: 'Cable Fly', muscleGroup: 'chest' },
-  { name: 'Push-Up', muscleGroup: 'chest' },
+  { name: 'Push-Up', muscleGroup: 'chest', isBodyweight: true },
   // Back
   { name: 'Deadlift', muscleGroup: 'back' },
   { name: 'Barbell Row', muscleGroup: 'back' },
   { name: 'Dumbbell Row', muscleGroup: 'back' },
   { name: 'Lat Pulldown', muscleGroup: 'back' },
-  { name: 'Pull-Up', muscleGroup: 'back' },
+  { name: 'Pull-Up', muscleGroup: 'back', isBodyweight: true },
   { name: 'Seated Cable Row', muscleGroup: 'back' },
   { name: 'Face Pull', muscleGroup: 'back' },
   // Shoulders
@@ -48,9 +55,9 @@ export const STARTER_EXERCISES: { name: string; muscleGroup: MuscleGroup }[] = [
   { name: 'Hammer Curl', muscleGroup: 'biceps' },
   { name: 'Triceps Pushdown', muscleGroup: 'triceps' },
   { name: 'Overhead Triceps Extension', muscleGroup: 'triceps' },
-  { name: 'Dip', muscleGroup: 'triceps' },
+  { name: 'Dip', muscleGroup: 'triceps', isBodyweight: true },
   // Core
-  { name: 'Plank', muscleGroup: 'core' },
-  { name: 'Hanging Leg Raise', muscleGroup: 'core' },
+  { name: 'Plank', muscleGroup: 'core', isBodyweight: true },
+  { name: 'Hanging Leg Raise', muscleGroup: 'core', isBodyweight: true },
   { name: 'Cable Crunch', muscleGroup: 'core' },
 ];
