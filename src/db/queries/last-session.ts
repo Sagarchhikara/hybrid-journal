@@ -9,6 +9,8 @@ export interface LastSessionSet {
   weightKg: number | null;
   reps: number;
   setOrder: number;
+  /** Carried through so recall and prefill reproduce a drop as a drop. */
+  isDropSet: boolean;
 }
 
 export interface LastSession {
@@ -95,7 +97,12 @@ export async function getLastSessions(
       date: row.date,
       sets: sets
         .filter((set) => set.workoutExerciseId === row.workoutExerciseId)
-        .map((set) => ({ weightKg: set.weightKg, reps: set.reps, setOrder: set.setOrder })),
+        .map((set) => ({
+          weightKg: set.weightKg,
+          reps: set.reps,
+          setOrder: set.setOrder,
+          isDropSet: set.isDropSet,
+        })),
     });
   }
 

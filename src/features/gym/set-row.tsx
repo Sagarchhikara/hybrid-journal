@@ -18,6 +18,51 @@ export interface SetRowProps {
   onChange: (patch: Partial<Omit<DraftSet, 'localId'>>) => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  /** Appends a drop set below this one, pre-reduced from its weight. */
+  onAddDrop: () => void;
+  onToggleDrop: () => void;
+}
+
+/**
+ * Column geometry shared by SetRowHeader and SetRow, so the labels sit over their inputs.
+ *
+ * Space is tight: on a 360dp phone a card leaves ~290dp for the whole row, and the -/+
+ * buttons take 88 of it. Units therefore live in one header per exercise rather than
+ * beside every input, and the inputs use slim padding — with the full form-field padding
+ * the reps box was ~33dp wide with ~1dp left for text, so typed reps were invisible.
+ */
+const INDEX_WIDTH = 20;
+const STEP_SIZE = 44;
+const WEIGHT_FLEX = 1.4;
+const REPS_FLEX = 1;
+
+/** Slim variant of NumberField for the set grid; see the geometry note above. */
+const COMPACT_INPUT = { paddingHorizontal: 4, fontSize: 18, lineHeight: 24 } as const;
+
+export function SetRowHeader({ isBodyweight, unit }: { isBodyweight: boolean; unit: WeightUnit }) {
+  const { spacing } = useTheme();
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+      <Text variant="caption" color="muted" style={{ width: INDEX_WIDTH }}>
+        Set
+      </Text>
+      {/* Spans the -/+ buttons and the weight input between them. */}
+      <Text
+        variant="caption"
+        color="muted"
+        style={{
+          flex: WEIGHT_FLEX,
+          marginHorizontal: STEP_SIZE + spacing.sm,
+          textAlign: 'center',
+        }}>
+        {isBodyweight ? `+${unit}` : unit}
+      </Text>
+      <Text variant="caption" color="muted" style={{ flex: REPS_FLEX, textAlign: 'center' }}>
+        Reps
+      </Text>
+    </View>
+  );
 }
 
 /**
@@ -36,6 +81,8 @@ export function SetRow({
   onChange,
   onDuplicate,
   onRemove,
+  onAddDrop,
+  onToggleDrop,
 }: SetRowProps) {
   const { colors, radii, spacing } = useTheme();
 
@@ -44,18 +91,21 @@ export function SetRow({
     onChange({ weight: String(next) });
   }
 
-  const weightLabel = isBodyweight ? `+${unit}` : unit;
+  // Spoken, not shown: the lighter colour carries this for sighted users.
+  const recalledHint = set.isRecalled ? ', from last session' : '';
 
   return (
     <View style={{ gap: spacing.xs }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <Text variant="label" color="muted" style={{ width: 20 }}>
-          {index + 1}
+        {/* A drop continues the set above rather than being a set of its own, so it is
+            marked instead of numbered. */}
+        <Text variant="label" color="muted" style={{ width: INDEX_WIDTH }}>
+          {set.isDropSet ? '↳' : index + 1}
         </Text>
 
         <StepButton direction={-1} onPress={() => step(-1)} />
 
-        <View style={{ flex: 1.4 }}>
+        <View style={{ flex: WEIGHT_FLEX }}>
           <NumberField
             decimal
             value={set.weight}
@@ -64,17 +114,14 @@ export function SetRow({
             align="center"
             invalid={error !== undefined}
             maxLength={6}
-            accessibilityLabel={`Set ${index + 1} weight in ${unit}`}
+            style={[COMPACT_INPUT, set.isRecalled && { color: colors.muted }]}
+            accessibilityLabel={`Set ${index + 1} weight in ${unit}${recalledHint}`}
           />
         </View>
 
         <StepButton direction={1} onPress={() => step(1)} />
 
-        <Text variant="caption" color="muted" style={{ width: 28 }}>
-          {weightLabel}
-        </Text>
-
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: REPS_FLEX }}>
           <NumberField
             value={set.reps}
             onChangeText={(reps) => onChange({ reps })}
@@ -82,13 +129,10 @@ export function SetRow({
             align="center"
             invalid={error !== undefined}
             maxLength={4}
-            accessibilityLabel={`Set ${index + 1} reps`}
+            style={[COMPACT_INPUT, set.isRecalled && { color: colors.muted }]}
+            accessibilityLabel={`Set ${index + 1} reps${recalledHint}`}
           />
         </View>
-
-        <Text variant="caption" color="muted" style={{ width: 28 }}>
-          reps
-        </Text>
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
@@ -105,6 +149,17 @@ export function SetRow({
           icon="copy"
           accessibilityLabel={`Duplicate set ${index + 1}`}
           onPress={onDuplicate}
+        />
+        <SmallAction
+          label="Drop"
+          accessibilityLabel={
+            set.isDropSet
+              ? `Set ${index + 1} is a drop set, tap to make it a normal set`
+              : `Add a drop set after set ${index + 1}`
+          }
+          // Tapping a drop row un-marks it; tapping a normal row adds a drop under it.
+          onPress={set.isDropSet ? onToggleDrop : onAddDrop}
+          active={set.isDropSet}
         />
         <SmallAction
           icon="trash"
@@ -135,8 +190,8 @@ function StepButton({ direction, onPress }: { direction: 1 | -1; onPress: () => 
       onPress={onPress}
       // 44pt minimum: this is tapped with a thumb between sets.
       style={({ pressed }) => ({
-        width: 44,
-        height: 44,
+        width: STEP_SIZE,
+        height: STEP_SIZE,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: pressed ? colors.accent : colors.surfaceRaised,

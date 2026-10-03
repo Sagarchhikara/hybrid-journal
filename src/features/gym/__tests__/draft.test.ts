@@ -175,7 +175,7 @@ describe('addSet', () => {
         type: 'updateSet',
         exerciseLocalId,
         setLocalId: firstSet,
-        patch: { weight: '80', reps: '8' },
+        patch: { weight: '80', reps: '8', isDropSet: false },
       },
       { type: 'addSet', exerciseLocalId },
     );
@@ -270,7 +270,7 @@ describe('removeSet and duplicateSet', () => {
         type: 'updateSet',
         exerciseLocalId,
         setLocalId: 3,
-        patch: { weight: '85', reps: '5' },
+        patch: { weight: '85', reps: '5', isDropSet: false },
       },
       { type: 'duplicateSet', exerciseLocalId, setLocalId: first },
     );
@@ -305,9 +305,9 @@ describe('fillFromLast', () => {
       type: 'fillFromLast',
       exerciseLocalId,
       sets: [
-        { weight: '72.5', reps: '6' },
-        { weight: '70', reps: '8' },
-        { weight: '70', reps: '8' },
+        { weight: '72.5', reps: '6', isDropSet: false },
+        { weight: '70', reps: '8', isDropSet: false },
+        { weight: '70', reps: '8', isDropSet: false },
       ],
     });
 

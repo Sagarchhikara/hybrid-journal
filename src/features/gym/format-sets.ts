@@ -9,6 +9,7 @@ import { toDisplayWeight } from './weight-steps';
 export interface SetLike {
   weightKg: number | null;
   reps: number;
+  isDropSet?: boolean;
 }
 
 /**
@@ -16,19 +17,26 @@ export interface SetLike {
  * bodyweight — see the schema comment on exercise_sets.
  */
 export function formatSet(set: SetLike, isBodyweight: boolean, unit: WeightUnit): string {
+  const drop = set.isDropSet === true ? ' (drop)' : '';
+
   if (set.weightKg === null) {
-    return isBodyweight ? `BW × ${set.reps}` : `× ${set.reps}`;
+    return isBodyweight ? `BW × ${set.reps}${drop}` : `× ${set.reps}${drop}`;
   }
 
   const weight = toDisplayWeight(set.weightKg, unit);
-  return isBodyweight ? `BW +${weight} ${unit} × ${set.reps}` : `${weight} ${unit} × ${set.reps}`;
+  return isBodyweight
+    ? `BW +${weight} ${unit} × ${set.reps}${drop}`
+    : `${weight} ${unit} × ${set.reps}${drop}`;
 }
 
 /** Compact form for a recall line: the unit is stated once at the end, not per set. */
 function formatSetCompact(set: SetLike, isBodyweight: boolean, unit: WeightUnit): string {
-  if (set.weightKg === null) return isBodyweight ? `BW × ${set.reps}` : `× ${set.reps}`;
+  // A lowercase 'd' rather than '(drop)': this form has to fit on one recall line.
+  const drop = set.isDropSet === true ? 'd' : '';
+  if (set.weightKg === null)
+    return isBodyweight ? `BW × ${set.reps}${drop}` : `× ${set.reps}${drop}`;
   const weight = toDisplayWeight(set.weightKg, unit);
-  return isBodyweight ? `BW+${weight} × ${set.reps}` : `${weight} × ${set.reps}`;
+  return isBodyweight ? `BW+${weight} × ${set.reps}${drop}` : `${weight} × ${set.reps}${drop}`;
 }
 
 export function formatSetList(
@@ -62,9 +70,10 @@ export function formatLastSession(
 export function lastSessionToDraftSets(
   session: LastSession,
   unit: WeightUnit,
-): { weight: string; reps: string }[] {
+): { weight: string; reps: string; isDropSet: boolean }[] {
   return session.sets.map((set) => ({
     weight: set.weightKg === null ? '' : String(toDisplayWeight(set.weightKg, unit)),
     reps: String(set.reps),
+    isDropSet: set.isDropSet,
   }));
 }

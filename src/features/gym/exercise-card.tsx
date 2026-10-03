@@ -5,10 +5,10 @@ import type { LastSession } from '@/db/queries/last-session';
 import type { WeightUnit } from '@/lib/units';
 import { useTheme } from '@/theme';
 
-import type { DraftAction, DraftExercise } from './draft';
+import type { DraftAction, DraftExercise, DraftSet } from './draft';
 import { hasTypedSets } from './draft';
 import { formatLastSession, lastSessionToDraftSets } from './format-sets';
-import { SetRow } from './set-row';
+import { SetRow, SetRowHeader } from './set-row';
 
 export interface ExerciseCardProps {
   exercise: DraftExercise;
@@ -18,6 +18,20 @@ export interface ExerciseCardProps {
   lastSession: LastSession | undefined;
   setErrors: Map<number, string>;
   dispatch: (action: DraftAction) => void;
+}
+
+/**
+ * The number to show against a row: drops are not counted, so three working sets with a
+ * drop after each read 1, ↳, 2, ↳, 3, ↳ rather than 1 through 6.
+ *
+ * Returns a zero-based index because SetRow renders `index + 1`.
+ */
+function workingSetNumber(sets: readonly DraftSet[], position: number): number {
+  let seen = 0;
+  for (let i = 0; i < position; i += 1) {
+    if (!sets[i]!.isDropSet) seen += 1;
+  }
+  return seen;
 }
 
 export function ExerciseCard({
@@ -38,30 +52,6 @@ export function ExerciseCard({
   function fallbackFor(position: number): { weight: string; reps: string } | undefined {
     if (!lastSession) return undefined;
     return lastSessionToDraftSets(lastSession, unit)[position];
-  }
-
-  function fillFromLast(): void {
-    if (!lastSession) return;
-    const sets = lastSessionToDraftSets(lastSession, unit);
-
-    if (!hasTypedSets(exercise)) {
-      dispatch({ type: 'fillFromLast', exerciseLocalId, sets });
-      return;
-    }
-
-    // Never silently overwrite work already entered.
-    Alert.alert(
-      'Replace what you have entered?',
-      'This exercise already has sets. Filling from last session will replace them.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Replace',
-          style: 'destructive',
-          onPress: () => dispatch({ type: 'fillFromLast', exerciseLocalId, sets }),
-        },
-      ],
-    );
   }
 
   function confirmRemove(): void {
@@ -121,10 +111,13 @@ export function ExerciseCard({
       </View>
 
       <View style={{ gap: spacing.md }}>
+        {exercise.sets.length > 0 ? (
+          <SetRowHeader isBodyweight={exercise.isBodyweight} unit={unit} />
+        ) : null}
         {exercise.sets.map((set, setIndex) => (
           <SetRow
             key={set.localId}
-            index={setIndex}
+            index={workingSetNumber(exercise.sets, setIndex)}
             set={set}
             isBodyweight={exercise.isBodyweight}
             unit={unit}
@@ -137,6 +130,10 @@ export function ExerciseCard({
             }
             onRemove={() =>
               dispatch({ type: 'removeSet', exerciseLocalId, setLocalId: set.localId })
+            }
+            onAddDrop={() => dispatch({ type: 'addSet', exerciseLocalId, drop: true })}
+            onToggleDrop={() =>
+              dispatch({ type: 'toggleDropSet', exerciseLocalId, setLocalId: set.localId })
             }
           />
         ))}
@@ -154,7 +151,6 @@ export function ExerciseCard({
             })
           }
         />
-        {lastSession ? <TextAction label="Fill from last" onPress={fillFromLast} /> : null}
       </View>
     </View>
   );

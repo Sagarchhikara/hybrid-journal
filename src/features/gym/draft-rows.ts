@@ -13,6 +13,7 @@ export interface SetRow {
   weightKg: number | null;
   reps: number;
   setOrder: number;
+  isDropSet: boolean;
 }
 
 export interface ExerciseRow {
@@ -102,7 +103,12 @@ export function validateDraft(draft: WorkoutDraft, unit: WeightUnit): DraftValid
         setErrors.set(set.localId, outcome.message);
         continue;
       }
-      sets.push({ weightKg: outcome.weightKg, reps: outcome.reps, setOrder: sets.length });
+      sets.push({
+        weightKg: outcome.weightKg,
+        reps: outcome.reps,
+        setOrder: sets.length,
+        isDropSet: set.isDropSet,
+      });
     }
 
     // An exercise with no usable sets is dropped rather than stored empty.
@@ -153,6 +159,9 @@ export function draftFromWorkout(detail: WorkoutDetail, unit: WeightUnit): Worko
       localId: take(),
       weight: set.weightKg === null ? '' : String(toDisplayWeight(set.weightKg, unit)),
       reps: String(set.reps),
+      isDropSet: set.isDropSet,
+      // Editing a finished workout: every set is already confirmed.
+      isRecalled: false,
     })),
   }));
 

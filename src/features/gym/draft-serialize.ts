@@ -33,7 +33,14 @@ function parseSet(value: unknown): DraftSet | null {
   const weight = asString(value.weight);
   const reps = asString(value.reps);
   if (localId === null || weight === null || reps === null) return null;
-  return { localId, weight, reps };
+  // Both flags default to false, so a draft stored before they existed still parses.
+  return {
+    localId,
+    weight,
+    reps,
+    isDropSet: value.isDropSet === true,
+    isRecalled: value.isRecalled === true,
+  };
 }
 
 function parseExercise(value: unknown): DraftExercise | null {

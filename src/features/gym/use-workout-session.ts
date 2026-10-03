@@ -8,8 +8,15 @@ import { getLastSessions, type LastSession } from '@/db/queries/last-session';
 import { todayLocal } from '@/lib/dates';
 import type { WeightUnit } from '@/lib/units';
 
-import { createDraft, draftReducer, type DraftAction, type WorkoutDraft } from './draft';
+import {
+  createDraft,
+  draftReducer,
+  isUntouched,
+  type DraftAction,
+  type WorkoutDraft,
+} from './draft';
 import { draftFromWorkout, validateDraft, type DraftValidation } from './draft-rows';
+import { lastSessionToDraftSets } from './format-sets';
 import { createDraftWriter } from './draft-writer';
 
 export interface WorkoutSession {
@@ -157,6 +164,34 @@ export function useWorkoutSession(options: UseWorkoutSessionOptions = {}): Worko
     // Re-runs when the exercise list or the draft's date changes, not on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseKey, draft?.date, workoutId]);
+
+  // --- prefill from recall ---------------------------------------------------
+  // Replaces the old "Fill from last" button: an exercise nobody has typed into is
+  // filled with last session's sets, marked recalled so they render lighter. Only
+  // untouched exercises are filled, so this can never overwrite entered work, and
+  // `filledFor` keeps it to once per exercise — re-filling after a deliberate clear
+  // would be the screen arguing with the user.
+  const filledFor = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (draft === null || editing) return;
+
+    for (const exercise of draft.exercises) {
+      if (filledFor.current.has(exercise.localId)) continue;
+
+      const session = lastSessions.get(exercise.exerciseId);
+      if (!session || session.sets.length === 0) continue;
+      if (!isUntouched(exercise)) continue;
+
+      filledFor.current.add(exercise.localId);
+      dispatch({
+        type: 'fillFromLast',
+        exerciseLocalId: exercise.localId,
+        sets: lastSessionToDraftSets(session, unit),
+        recalled: true,
+      });
+    }
+  }, [draft, editing, lastSessions, unit]);
 
   // Derived rather than cleared inside the effect: with no exercises on screen there is
   // nothing to recall, and setting state synchronously in an effect is a cascading render.

@@ -139,6 +139,19 @@ export const exerciseSets = sqliteTable(
     weightKg: real('weight_kg'),
     reps: integer('reps').notNull(),
     setOrder: integer('set_order').notNull(),
+    /**
+     * True for a drop set: the same exercise continued immediately at a lighter load,
+     * rather than a fresh working set after a rest.
+     *
+     * Kept as a flag on the set instead of a separate table because a drop is still one
+     * set of one exercise — it only differs in how it should be read. Without the flag a
+     * drop is indistinguishable in history from a working set where you simply got
+     * tired, which is the whole reason for recording it.
+     *
+     * Ordering carries the rest of the meaning: a drop belongs to the nearest preceding
+     * non-drop set in `set_order`.
+     */
+    isDropSet: integer('is_drop_set', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('exercise_sets_workout_exercise_idx').on(t.workoutExerciseId, t.setOrder)],
 );

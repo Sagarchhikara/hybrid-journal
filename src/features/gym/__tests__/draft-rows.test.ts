@@ -2,8 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import type { WorkoutDetail } from '@/db/queries/gym';
 
-import { createDraft, draftReducer, type WorkoutDraft } from '../draft';
+import { createDraft, draftReducer, type DraftSet, type WorkoutDraft } from '../draft';
 import { countValidSets, draftFromWorkout, validateDraft, validateSet } from '../draft-rows';
+
+/** A draft set with the flags defaulted, so each test states only what it is about. */
+function set(
+  fields: { localId: number; weight: string; reps: string } & Partial<DraftSet>,
+): DraftSet {
+  return { isDropSet: false, isRecalled: false, ...fields };
+}
 
 const BENCH = { exerciseId: 1, name: 'Barbell Bench Press', isBodyweight: false };
 const PULLUP = { exerciseId: 2, name: 'Pull-Up', isBodyweight: true };
@@ -34,7 +41,7 @@ describe('validateSet for a weighted exercise', () => {
   const exercise = { localId: 1, ...BENCH, sets: [] };
 
   it('accepts a weight and reps', () => {
-    expect(validateSet({ localId: 1, weight: '80', reps: '8' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '80', reps: '8' }), exercise, 'kg')).toEqual({
       kind: 'valid',
       weightKg: 80,
       reps: 8,
@@ -42,43 +49,47 @@ describe('validateSet for a weighted exercise', () => {
   });
 
   it('treats a wholly empty set as blank, to be dropped silently', () => {
-    expect(validateSet({ localId: 1, weight: '', reps: '' }, exercise, 'kg').kind).toBe('blank');
+    expect(validateSet(set({ localId: 1, weight: '', reps: '' }), exercise, 'kg').kind).toBe(
+      'blank',
+    );
   });
 
   it('rejects a weight with no reps', () => {
-    expect(validateSet({ localId: 1, weight: '80', reps: '' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '80', reps: '' }), exercise, 'kg')).toEqual({
       kind: 'invalid',
       message: 'Add reps',
     });
   });
 
   it('requires a weight when the exercise is not bodyweight', () => {
-    expect(validateSet({ localId: 1, weight: '', reps: '8' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '', reps: '8' }), exercise, 'kg')).toEqual({
       kind: 'invalid',
       message: 'Add a weight',
     });
   });
 
   it('rejects zero weight', () => {
-    expect(validateSet({ localId: 1, weight: '0', reps: '8' }, exercise, 'kg').kind).toBe(
+    expect(validateSet(set({ localId: 1, weight: '0', reps: '8' }), exercise, 'kg').kind).toBe(
       'invalid',
     );
   });
 
   it('rejects reps below one', () => {
-    expect(validateSet({ localId: 1, weight: '80', reps: '0' }, exercise, 'kg').kind).toBe(
+    expect(validateSet(set({ localId: 1, weight: '80', reps: '0' }), exercise, 'kg').kind).toBe(
       'invalid',
     );
   });
 
   it('rejects junk and negative weights', () => {
     for (const weight of ['abc', '-5', '1.2.3']) {
-      expect(validateSet({ localId: 1, weight, reps: '8' }, exercise, 'kg').kind).toBe('invalid');
+      expect(validateSet(set({ localId: 1, weight, reps: '8' }), exercise, 'kg').kind).toBe(
+        'invalid',
+      );
     }
   });
 
   it('converts a pound entry to kg', () => {
-    const result = validateSet({ localId: 1, weight: '160', reps: '8' }, exercise, 'lb');
+    const result = validateSet(set({ localId: 1, weight: '160', reps: '8' }), exercise, 'lb');
     expect(result.kind).toBe('valid');
     if (result.kind === 'valid') expect(result.weightKg).toBeCloseTo(72.5748, 3);
   });
@@ -88,7 +99,7 @@ describe('validateSet for a bodyweight exercise', () => {
   const exercise = { localId: 1, ...PULLUP, sets: [] };
 
   it('accepts reps with no weight as plain bodyweight', () => {
-    expect(validateSet({ localId: 1, weight: '', reps: '10' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '', reps: '10' }), exercise, 'kg')).toEqual({
       kind: 'valid',
       weightKg: null,
       reps: 10,
@@ -96,7 +107,7 @@ describe('validateSet for a bodyweight exercise', () => {
   });
 
   it('accepts a positive added load', () => {
-    expect(validateSet({ localId: 1, weight: '10', reps: '8' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '10', reps: '8' }), exercise, 'kg')).toEqual({
       kind: 'valid',
       weightKg: 10,
       reps: 8,
@@ -104,7 +115,7 @@ describe('validateSet for a bodyweight exercise', () => {
   });
 
   it('stores zero added load as plain bodyweight rather than rejecting it', () => {
-    expect(validateSet({ localId: 1, weight: '0', reps: '8' }, exercise, 'kg')).toEqual({
+    expect(validateSet(set({ localId: 1, weight: '0', reps: '8' }), exercise, 'kg')).toEqual({
       kind: 'valid',
       weightKg: null,
       reps: 8,
@@ -112,7 +123,7 @@ describe('validateSet for a bodyweight exercise', () => {
   });
 
   it('still rejects a negative added load', () => {
-    expect(validateSet({ localId: 1, weight: '-5', reps: '8' }, exercise, 'kg').kind).toBe(
+    expect(validateSet(set({ localId: 1, weight: '-5', reps: '8' }), exercise, 'kg').kind).toBe(
       'invalid',
     );
   });
@@ -138,9 +149,9 @@ describe('validateDraft', () => {
           exerciseId: 1,
           sortOrder: 0,
           sets: [
-            { weightKg: 80, reps: 8, setOrder: 0 },
-            { weightKg: 82.5, reps: 6, setOrder: 1 },
-            { weightKg: 85, reps: 4, setOrder: 2 },
+            { weightKg: 80, reps: 8, setOrder: 0, isDropSet: false },
+            { weightKg: 82.5, reps: 6, setOrder: 1, isDropSet: false },
+            { weightKg: 85, reps: 4, setOrder: 2, isDropSet: false },
           ],
         },
       ],
@@ -157,8 +168,8 @@ describe('validateDraft', () => {
 
     expect(setErrors.size).toBe(0);
     expect(rows?.exercises[0]!.sets).toEqual([
-      { weightKg: 80, reps: 8, setOrder: 0 },
-      { weightKg: 85, reps: 4, setOrder: 1 },
+      { weightKg: 80, reps: 8, setOrder: 0, isDropSet: false },
+      { weightKg: 85, reps: 4, setOrder: 1, isDropSet: false },
     ]);
   });
 
@@ -256,8 +267,8 @@ describe('draftFromWorkout round trip', () => {
         isArchived: false,
         sortOrder: 0,
         sets: [
-          { id: 1, weightKg: null, reps: 10, setOrder: 0 },
-          { id: 2, weightKg: 10, reps: 8, setOrder: 1 },
+          { id: 1, weightKg: null, reps: 10, setOrder: 0, isDropSet: false },
+          { id: 2, weightKg: 10, reps: 8, setOrder: 1, isDropSet: false },
         ],
       },
       {
@@ -268,7 +279,7 @@ describe('draftFromWorkout round trip', () => {
         isBodyweight: false,
         isArchived: false,
         sortOrder: 1,
-        sets: [{ id: 3, weightKg: 70, reps: 8, setOrder: 0 }],
+        sets: [{ id: 3, weightKg: 70, reps: 8, setOrder: 0, isDropSet: false }],
       },
     ],
   };
@@ -296,11 +307,15 @@ describe('draftFromWorkout round trip', () => {
           exerciseId: 2,
           sortOrder: 0,
           sets: [
-            { weightKg: null, reps: 10, setOrder: 0 },
-            { weightKg: 10, reps: 8, setOrder: 1 },
+            { weightKg: null, reps: 10, setOrder: 0, isDropSet: false },
+            { weightKg: 10, reps: 8, setOrder: 1, isDropSet: false },
           ],
         },
-        { exerciseId: 3, sortOrder: 1, sets: [{ weightKg: 70, reps: 8, setOrder: 0 }] },
+        {
+          exerciseId: 3,
+          sortOrder: 1,
+          sets: [{ weightKg: 70, reps: 8, setOrder: 0, isDropSet: false }],
+        },
       ],
     });
   });

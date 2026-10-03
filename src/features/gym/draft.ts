@@ -15,6 +15,16 @@ export interface DraftSet {
   /** Display-unit weight. Empty means no load: bodyweight, or not yet entered. */
   weight: string;
   reps: string;
+  /** A drop set: the same exercise continued immediately at a lighter load. */
+  isDropSet: boolean;
+  /**
+   * True while these numbers came from the last session and have not been touched.
+   *
+   * A recalled set is real: it is what you are about to do again, and Finish logs it
+   * unchanged. The flag only drives the lighter styling and is cleared by the first
+   * edit, so the card can show at a glance which rows you have confirmed.
+   */
+  isRecalled: boolean;
 }
 
 export interface DraftExercise {
@@ -59,8 +69,22 @@ export function createDraft(
   };
 }
 
+/**
+ * The load a drop set starts at: 20% off, rounded to something you can actually load.
+ * A starting point only — it is a text field like any other.
+ */
+export function dropWeight(weight: string): string {
+  const parsed = Number(weight.trim());
+  if (weight.trim() === '' || !Number.isFinite(parsed) || parsed <= 0) return '';
+
+  const reduced = parsed * 0.8;
+  // Half-kg precision below 20, whole units above: 2.5 off a 10kg dumbbell is a lot.
+  const rounded = reduced < 20 ? Math.round(reduced * 2) / 2 : Math.round(reduced);
+  return String(rounded);
+}
+
 export function emptySet(localId: number): DraftSet {
-  return { localId, weight: '', reps: '' };
+  return { localId, weight: '', reps: '', isDropSet: false, isRecalled: false };
 }
 
 /** True when a set has nothing in it at all. These are dropped silently on Finish. */
@@ -71,6 +95,15 @@ export function isSetBlank(set: DraftSet): boolean {
 /** True when the user has typed anything into this exercise. */
 export function hasTypedSets(exercise: DraftExercise): boolean {
   return exercise.sets.some((set) => !isSetBlank(set));
+}
+
+/**
+ * True when nothing in this exercise has been confirmed by hand: every set is either
+ * blank or still showing recalled numbers. This is what makes it safe to replace the
+ * sets wholesale when the last session finally loads.
+ */
+export function isUntouched(exercise: DraftExercise): boolean {
+  return exercise.sets.every((set) => set.isRecalled || isSetBlank(set));
 }
 
 export function isDraftEmpty(draft: WorkoutDraft): boolean {
@@ -93,7 +126,10 @@ export type DraftAction =
       exerciseLocalId: number;
       /** Used when there is no previous set in this exercise to copy. */
       fallback?: { weight: string; reps: string };
+      /** Appends a drop set, pre-reduced from the set above it. */
+      drop?: boolean;
     }
+  | { type: 'toggleDropSet'; exerciseLocalId: number; setLocalId: number }
   | {
       type: 'updateSet';
       exerciseLocalId: number;
@@ -103,7 +139,13 @@ export type DraftAction =
   | { type: 'removeSet'; exerciseLocalId: number; setLocalId: number }
   | { type: 'duplicateSet'; exerciseLocalId: number; setLocalId: number }
   | { type: 'clearSetWeight'; exerciseLocalId: number; setLocalId: number }
-  | { type: 'fillFromLast'; exerciseLocalId: number; sets: { weight: string; reps: string }[] }
+  | {
+      type: 'fillFromLast';
+      exerciseLocalId: number;
+      sets: { weight: string; reps: string; isDropSet: boolean }[];
+      /** Marks the filled sets as recalled, so they render lighter until edited. */
+      recalled?: boolean;
+    }
   | { type: 'replace'; draft: WorkoutDraft };
 
 function mapExercise(
@@ -179,20 +221,47 @@ export function draftReducer(draft: WorkoutDraft, action: DraftAction): WorkoutD
           ? { weight: previous.weight, reps: previous.reps }
           : (action.fallback ?? { weight: '', reps: '' });
 
+      // A drop starts lighter than the set it follows and with the reps cleared: the
+      // whole point is that you do not know yet how many you will get.
+      const set: DraftSet = action.drop
+        ? {
+            localId: draft.nextLocalId,
+            weight: dropWeight(seed.weight),
+            reps: '',
+            isDropSet: true,
+            isRecalled: false,
+          }
+        : {
+            localId: draft.nextLocalId,
+            weight: seed.weight,
+            reps: seed.reps,
+            isDropSet: false,
+            isRecalled: false,
+          };
+
       return {
         ...mapExercise(draft, action.exerciseLocalId, (item) => ({
           ...item,
-          sets: [...item.sets, { localId: draft.nextLocalId, ...seed }],
+          sets: [...item.sets, set],
         })),
         nextLocalId: draft.nextLocalId + 1,
       };
     }
 
+    case 'toggleDropSet':
+      return mapExercise(draft, action.exerciseLocalId, (exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) =>
+          set.localId === action.setLocalId ? { ...set, isDropSet: !set.isDropSet } : set,
+        ),
+      }));
+
     case 'updateSet':
       return mapExercise(draft, action.exerciseLocalId, (exercise) => ({
         ...exercise,
         sets: exercise.sets.map((set) =>
-          set.localId === action.setLocalId ? { ...set, ...action.patch } : set,
+          // Touching a recalled set confirms it, which is what drops the lighter styling.
+          set.localId === action.setLocalId ? { ...set, ...action.patch, isRecalled: false } : set,
         ),
       }));
 
@@ -200,7 +269,7 @@ export function draftReducer(draft: WorkoutDraft, action: DraftAction): WorkoutD
       return mapExercise(draft, action.exerciseLocalId, (exercise) => ({
         ...exercise,
         sets: exercise.sets.map((set) =>
-          set.localId === action.setLocalId ? { ...set, weight: '' } : set,
+          set.localId === action.setLocalId ? { ...set, weight: '', isRecalled: false } : set,
         ),
       }));
 
@@ -220,6 +289,8 @@ export function draftReducer(draft: WorkoutDraft, action: DraftAction): WorkoutD
         localId: draft.nextLocalId,
         weight: source.weight,
         reps: source.reps,
+        isDropSet: source.isDropSet,
+        isRecalled: false,
       };
       const sets = [...exercise.sets];
       sets.splice(index + 1, 0, copy);
@@ -240,6 +311,8 @@ export function draftReducer(draft: WorkoutDraft, action: DraftAction): WorkoutD
         localId: draft.nextLocalId + offset,
         weight: set.weight,
         reps: set.reps,
+        isDropSet: set.isDropSet,
+        isRecalled: action.recalled === true,
       }));
 
       return {

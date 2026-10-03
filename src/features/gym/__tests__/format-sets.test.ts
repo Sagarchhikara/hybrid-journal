@@ -31,6 +31,34 @@ describe('formatSet reads a stored weight against the exercise', () => {
   });
 });
 
+describe('formatSet marks a drop set', () => {
+  it('appends (drop) to the full form', () => {
+    expect(formatSet({ weightKg: 60, reps: 6, isDropSet: true }, false, 'kg')).toBe(
+      '60 kg × 6 (drop)',
+    );
+  });
+
+  it('marks a bodyweight drop too', () => {
+    expect(formatSet({ weightKg: null, reps: 8, isDropSet: true }, true, 'kg')).toBe(
+      'BW × 8 (drop)',
+    );
+  });
+
+  it('says nothing extra when the flag is absent or false', () => {
+    expect(formatSet({ weightKg: 60, reps: 6, isDropSet: false }, false, 'kg')).toBe('60 kg × 6');
+    expect(formatSet({ weightKg: 60, reps: 6 }, false, 'kg')).toBe('60 kg × 6');
+  });
+
+  it('uses a bare d in the compact recall form, which has one line to fit', () => {
+    const sets = [
+      { weightKg: 80, reps: 8, isDropSet: false },
+      { weightKg: 60, reps: 6, isDropSet: true },
+    ];
+
+    expect(formatSetList(sets, false, 'kg')).toBe('80 × 8 / 60 × 6d');
+  });
+});
+
 describe('formatSetList', () => {
   it('joins sets and states the unit once, at the end', () => {
     const sets = [

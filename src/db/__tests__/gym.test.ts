@@ -13,6 +13,8 @@ import {
 import { exerciseSets, exercises, gymWorkouts, workoutExercises } from '@/db/schema';
 import { seedExerciseLibrary } from '@/db/seed';
 
+import { getLastSession } from '@/db/queries/last-session';
+
 import { applyMigrations, resetTables } from './support/test-db';
 
 beforeAll(applyMigrations);
@@ -327,5 +329,94 @@ describe('runInTransaction rejects an asynchronous callback at compile time too'
     // @ts-expect-error async callbacks must be rejected by the signature
     const reject = () => runInTransaction(async () => 1);
     expect(typeof reject).toBe('function');
+  });
+});
+
+describe('drop sets through the database', () => {
+  it('round-trips the flag', async () => {
+    const id = await saveWorkout({
+      date: '2026-09-27',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        {
+          exerciseId: benchId,
+          sortOrder: 0,
+          sets: [
+            { weightKg: 100, reps: 5, setOrder: 0 },
+            { weightKg: 80, reps: 6, setOrder: 1, isDropSet: true },
+            { weightKg: 60, reps: 8, setOrder: 2, isDropSet: true },
+          ],
+        },
+      ],
+    });
+
+    const detail = await getWorkoutDetail(id);
+    expect(detail!.exercises[0]!.sets.map((set) => set.isDropSet)).toEqual([false, true, true]);
+  });
+
+  it('defaults to false when the caller omits it', async () => {
+    const id = await saveWorkout({
+      date: '2026-09-27',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        { exerciseId: benchId, sortOrder: 0, sets: [{ weightKg: 100, reps: 5, setOrder: 0 }] },
+      ],
+    });
+
+    const detail = await getWorkoutDetail(id);
+    expect(detail!.exercises[0]!.sets[0]!.isDropSet).toBe(false);
+  });
+
+  it('is carried by recall, so a prefill reproduces the drop', async () => {
+    await saveWorkout({
+      date: '2026-09-20',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        {
+          exerciseId: benchId,
+          sortOrder: 0,
+          sets: [
+            { weightKg: 100, reps: 5, setOrder: 0 },
+            { weightKg: 80, reps: 6, setOrder: 1, isDropSet: true },
+          ],
+        },
+      ],
+    });
+
+    const session = await getLastSession(benchId, { onOrBefore: '2026-09-27' });
+    expect(session?.sets.map((set) => set.isDropSet)).toEqual([false, true]);
+  });
+
+  it('survives an edit that replaces the workout', async () => {
+    const id = await saveWorkout({
+      date: '2026-09-27',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        { exerciseId: benchId, sortOrder: 0, sets: [{ weightKg: 100, reps: 5, setOrder: 0 }] },
+      ],
+    });
+
+    await replaceWorkout(id, {
+      date: '2026-09-27',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        {
+          exerciseId: benchId,
+          sortOrder: 0,
+          sets: [
+            { weightKg: 100, reps: 5, setOrder: 0 },
+            { weightKg: 80, reps: 7, setOrder: 1, isDropSet: true },
+          ],
+        },
+      ],
+    });
+
+    const detail = await getWorkoutDetail(id);
+    expect(detail!.exercises[0]!.sets.map((set) => set.isDropSet)).toEqual([false, true]);
   });
 });

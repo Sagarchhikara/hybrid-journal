@@ -16,6 +16,11 @@ export interface SetInput {
   weightKg: number | null;
   reps: number;
   setOrder: number;
+  /**
+   * A drop set: see the column comment on exercise_sets.is_drop_set. Optional because
+   * the column has a default and most sets are not drops — omitting it means false.
+   */
+  isDropSet?: boolean;
 }
 
 export interface ExerciseInput {
@@ -33,6 +38,8 @@ export interface WorkoutInput {
 
 export interface WorkoutDetailSet extends SetInput {
   id: number;
+  /** Always known on a set read back from the database. */
+  isDropSet: boolean;
 }
 
 export interface WorkoutDetailExercise {
@@ -131,6 +138,7 @@ function insertWorkoutRows(tx: Tx, input: WorkoutInput, workoutId?: number): num
           weightKg: set.weightKg,
           reps: set.reps,
           setOrder: set.setOrder,
+          isDropSet: set.isDropSet ?? false,
         })),
       )
       .run();
@@ -241,6 +249,7 @@ export async function getWorkoutDetail(id: number): Promise<WorkoutDetail | unde
           weightKg: set.weightKg,
           reps: set.reps,
           setOrder: set.setOrder,
+          isDropSet: set.isDropSet,
         })),
     })),
   };
