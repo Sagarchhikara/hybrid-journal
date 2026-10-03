@@ -45,9 +45,13 @@ export const STARTER_EXERCISES: StarterExercise[] = [
   { name: 'Front Squat', muscleGroup: 'quads' },
   { name: 'Leg Press', muscleGroup: 'quads' },
   { name: 'Bulgarian Split Squat', muscleGroup: 'quads' },
+  { name: 'Goblet Squat', muscleGroup: 'quads' },
   { name: 'Romanian Deadlift', muscleGroup: 'hamstrings' },
   { name: 'Leg Curl', muscleGroup: 'hamstrings' },
+  { name: 'Kettlebell Swing', muscleGroup: 'hamstrings' },
+  { name: 'Good Morning', muscleGroup: 'hamstrings' },
   { name: 'Hip Thrust', muscleGroup: 'glutes' },
+  { name: 'Walking Lunge', muscleGroup: 'glutes' },
   { name: 'Calf Raise', muscleGroup: 'calves' },
   // Arms
   { name: 'Barbell Curl', muscleGroup: 'biceps' },
@@ -60,4 +64,9 @@ export const STARTER_EXERCISES: StarterExercise[] = [
   { name: 'Plank', muscleGroup: 'core', isBodyweight: true },
   { name: 'Hanging Leg Raise', muscleGroup: 'core', isBodyweight: true },
   { name: 'Cable Crunch', muscleGroup: 'core' },
+  // Carry. Loaded carries have no natural muscle group: the farmer's carry is a
+  // whole-body brace, and the suitcase carry is anti-lateral-flexion, so it files
+  // under core alongside the other trunk work.
+  { name: "Farmer's Carry", muscleGroup: 'full_body' },
+  { name: 'Suitcase Carry', muscleGroup: 'core' },
 ];
