@@ -34,13 +34,27 @@ export async function readGymDraft(): Promise<WorkoutDraft | null> {
   return draft;
 }
 
-export async function writeGymDraft(draft: WorkoutDraft): Promise<void> {
+export interface WriteGymDraftOptions {
+  /**
+   * Skip the data-version bump. Used by the logging screen's autosave, which fires every
+   * few hundred milliseconds while sets are being typed: bumping there would re-run every
+   * read hook in the app on that cadence, and any screen that renders a spinner while its
+   * query is in flight would flicker. Nothing but the start screen's "workout in
+   * progress" card reads the draft, and that refetches when it regains focus.
+   */
+  silent?: boolean;
+}
+
+export async function writeGymDraft(
+  draft: WorkoutDraft,
+  options: WriteGymDraftOptions = {},
+): Promise<void> {
   const value = serializeDraft(draft);
   await db
     .insert(appSettings)
     .values({ key: GYM_DRAFT_KEY, value })
     .onConflictDoUpdate({ target: appSettings.key, set: { value } });
-  bumpDataVersion();
+  if (!options.silent) bumpDataVersion();
 }
 
 export async function clearGymDraft(): Promise<void> {

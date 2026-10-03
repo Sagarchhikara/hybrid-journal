@@ -71,7 +71,10 @@ export function useWorkoutSession(options: UseWorkoutSessionOptions = {}): Worko
   const [lastSessions, setLastSessions] = useState<Map<number, LastSession>>(new Map());
 
   // Only a new workout's draft is persisted; see the note above.
-  const writer = useMemo(() => createDraftWriter({ write: (next) => writeGymDraft(next) }), []);
+  const writer = useMemo(
+    () => createDraftWriter({ write: (next) => writeGymDraft(next, { silent: true }) }),
+    [],
+  );
   const loadedFor = useRef<string | null>(null);
 
   // --- load -----------------------------------------------------------------
@@ -208,7 +211,13 @@ export function useWorkoutSession(options: UseWorkoutSessionOptions = {}): Worko
   return {
     draft,
     dispatch,
-    loading: loading || settingsLoading,
+    // Deliberately NOT `loading || settingsLoading`. The load effect below already waits
+    // for settings before reading the draft, so `loading` covers the first render. Every
+    // write in the app bumps the data version, which puts useSettings back into its
+    // loading state — including the debounced write of this very draft. Folding that in
+    // made the screen swap itself for a spinner 600ms after each keystroke, which
+    // unmounted the inputs and dismissed the keyboard mid-set.
+    loading,
     editing,
     unit,
     validation,

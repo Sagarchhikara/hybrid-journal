@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 
 import { Button, Card, Chip, DateField, Field, FormScreen, Text, TextField } from '@/components';
@@ -24,7 +24,15 @@ export function GymStartScreen() {
   const [date, setDate] = useState<DateKey>(todayLocal());
   const [busy, setBusy] = useState(false);
 
-  const { data: draft, loading } = useDbQuery(readGymDraft, []);
+  const { data: draft, loading, refetch: refetchDraft } = useDbQuery(readGymDraft, []);
+
+  // The logging screen autosaves silently, so coming back from it is the moment to
+  // re-read how far the workout in progress has got.
+  useFocusEffect(
+    useCallback(() => {
+      refetchDraft();
+    }, [refetchDraft]),
+  );
   const { data: lastNamed } = useDbQuery(
     () => (name.trim() === '' ? Promise.resolve(undefined) : getLastWorkoutByName(name.trim())),
     [name.trim()],
