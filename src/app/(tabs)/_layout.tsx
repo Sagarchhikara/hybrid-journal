@@ -1,14 +1,12 @@
 import { Tabs, useRouter } from 'expo-router';
-import { Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Text } from '@/components';
 import { useTheme } from '@/theme';
 
-const TAB_BAR_HEIGHT = 56;
-
 export default function TabsLayout() {
-  const { colors, typography } = useTheme();
+  const { colors, typography, spacing, sizes, icons } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -22,8 +20,8 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
-            height: TAB_BAR_HEIGHT + insets.bottom,
-            paddingTop: 6,
+            height: sizes.tabBar + insets.bottom,
+            paddingTop: spacing.xs,
             paddingBottom: insets.bottom,
           },
         }}>
@@ -32,7 +30,7 @@ export default function TabsLayout() {
           options={{
             title: 'Home',
             tabBarIcon: ({ focused }) => (
-              <Icon name="home" size={22} color={focused ? 'accent' : 'muted'} />
+              <Icon name="home" size={icons.lg} color={focused ? 'accent' : 'muted'} />
             ),
           }}
         />
@@ -41,7 +39,7 @@ export default function TabsLayout() {
           options={{
             title: 'History',
             tabBarIcon: ({ focused }) => (
-              <Icon name="history" size={22} color={focused ? 'accent' : 'muted'} />
+              <Icon name="history" size={icons.lg} color={focused ? 'accent' : 'muted'} />
             ),
           }}
         />
@@ -50,7 +48,7 @@ export default function TabsLayout() {
           options={{
             title: 'Stats',
             tabBarIcon: ({ focused }) => (
-              <Icon name="stats" size={22} color={focused ? 'accent' : 'muted'} />
+              <Icon name="stats" size={icons.lg} color={focused ? 'accent' : 'muted'} />
             ),
           }}
         />
@@ -59,13 +57,13 @@ export default function TabsLayout() {
           options={{
             title: 'You',
             tabBarIcon: ({ focused }) => (
-              <Icon name="you" size={22} color={focused ? 'accent' : 'muted'} />
+              <Icon name="you" size={icons.lg} color={focused ? 'accent' : 'muted'} />
             ),
           }}
         />
       </Tabs>
 
-      <LogButton bottom={insets.bottom + TAB_BAR_HEIGHT + 12} />
+      <LogButton bottom={insets.bottom + sizes.tabBar + spacing.md} />
     </View>
   );
 }
@@ -75,7 +73,7 @@ export default function TabsLayout() {
  * tabs keep their full hit area and no placeholder route is needed to hold a gap.
  */
 function LogButton({ bottom }: { bottom: number }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, shadows } = useTheme();
   const router = useRouter();
 
   return (
@@ -94,21 +92,12 @@ function LogButton({ bottom }: { bottom: number }) {
             borderRadius: radii.pill,
             paddingVertical: spacing.md,
             paddingHorizontal: spacing.xl,
-            minHeight: 48,
+            minHeight: sizes.control,
             opacity: pressed ? 0.85 : 1,
           },
-          Platform.select({
-            ios: {
-              shadowColor: '#000',
-              shadowOpacity: 0.3,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 4 },
-            },
-            android: { elevation: 6 },
-            default: {},
-          }),
+          shadows.floating,
         ]}>
-        <Icon name="plus" size={20} color="accentText" />
+        <Icon name="plus" size={icons.md} color="accentText" />
         <Text variant="heading" color="accentText">
           Log
         </Text>

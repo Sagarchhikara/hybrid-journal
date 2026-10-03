@@ -28,6 +28,9 @@ export type IconName =
   | 'close'
   | 'check';
 
+/** Matches the weight of the type beside it; thinner looks broken at small sizes. */
+const STROKE_WIDTH = 1.8;
+
 const PATHS: Record<IconName, string[]> = {
   home: ['M3 10.5 12 3l9 7.5', 'M5.5 9.5V20h13V9.5', 'M9.5 20v-6h5v6'],
   history: ['M3.5 7h17', 'M3.5 12h17', 'M3.5 17h11'],
@@ -61,21 +64,23 @@ const PATHS: Record<IconName, string[]> = {
 
 export interface IconProps {
   name: IconName;
+  /** A value from the theme's `icons` scale. Defaults to `icons.xl`. */
   size?: number;
   color?: ColorToken;
 }
 
-export function Icon({ name, size = 24, color = 'text' }: IconProps) {
-  const { colors } = useTheme();
+export function Icon({ name, size, color = 'text' }: IconProps) {
+  const { colors, icons } = useTheme();
+  const side = size ?? icons.xl;
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={side} height={side} viewBox="0 0 24 24" fill="none">
       {PATHS[name].map((d) => (
         <Path
           key={d}
           d={d}
           stroke={colors[color]}
-          strokeWidth={1.8}
+          strokeWidth={STROKE_WIDTH}
           strokeLinecap="round"
           strokeLinejoin="round"
         />

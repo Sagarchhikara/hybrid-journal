@@ -30,7 +30,7 @@ export default function LogPickerScreen() {
 }
 
 function LogOption({ route, label, hint, icon, color }: (typeof OPTIONS)[number]) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
   const router = useRouter();
 
   return (
@@ -44,19 +44,19 @@ function LogOption({ route, label, hint, icon, color }: (typeof OPTIONS)[number]
         gap: spacing.lg,
         backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.lg,
         padding: spacing.lg,
-        minHeight: 64,
+        minHeight: sizes.rowTall,
       })}>
-      <Icon name={icon} size={26} color={color} />
+      <Icon name={icon} size={icons.xl} color={color} />
       <View style={{ flex: 1 }}>
         <Text variant="heading">{label}</Text>
         <Text variant="caption" color="muted">
           {hint}
         </Text>
       </View>
-      <Icon name="chevron" size={18} color="muted" />
+      <Icon name="chevron" size={icons.sm} color="muted" />
     </Pressable>
   );
 }

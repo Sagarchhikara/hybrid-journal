@@ -56,10 +56,11 @@ export function WeekCard() {
 }
 
 function Stat({ label, value, tint }: { label: string; value: string; tint: ColorToken }) {
+  const { spacing } = useTheme();
   const isEmpty = value === DASH;
 
   return (
-    <View style={{ flex: 1, gap: 2 }}>
+    <View style={{ flex: 1, gap: spacing.xxs }}>
       <Text variant="title" color={isEmpty ? 'muted' : tint} numberOfLines={1}>
         {value}
       </Text>

@@ -19,7 +19,7 @@ export const NumberField = forwardRef<TextInput, NumberFieldProps>(function Numb
   { decimal = false, invalid = false, align = 'left', style, ...rest },
   ref,
 ) {
-  const { colors, radii, spacing, typography } = useTheme();
+  const { colors, radii, spacing, typography, sizes, borderWidths } = useTheme();
 
   return (
     <TextInput
@@ -27,18 +27,19 @@ export const NumberField = forwardRef<TextInput, NumberFieldProps>(function Numb
       keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
       inputMode={decimal ? 'decimal' : 'numeric'}
       selectTextOnFocus
+      keyboardAppearance="dark"
       placeholderTextColor={colors.muted}
       style={[
         typography.title,
         {
           color: colors.text,
           backgroundColor: colors.surface,
-          borderWidth: 1,
+          borderWidth: borderWidths.hairline,
           borderColor: invalid ? colors.danger : colors.border,
           borderRadius: radii.md,
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.md,
-          minHeight: 52,
+          minHeight: sizes.field,
           textAlign: align,
         },
         style,

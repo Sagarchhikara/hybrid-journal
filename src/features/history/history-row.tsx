@@ -55,7 +55,7 @@ export interface HistoryRowProps {
 }
 
 export function HistoryRow({ entry, settings }: HistoryRowProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
   const router = useRouter();
   const { icon, color, href } = presentation(entry);
   const title = historyEntryTitle(entry);
@@ -88,22 +88,22 @@ export function HistoryRow({ entry, settings }: HistoryRowProps) {
         gap: spacing.lg,
         backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderLeftColor: colors[color],
-        borderLeftWidth: 3,
+        borderLeftWidth: borderWidths.accent,
         borderRadius: radii.md,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
-        minHeight: 60,
+        minHeight: sizes.row,
       })}>
-      <Icon name={icon} size={22} color={color} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <Icon name={icon} size={icons.lg} color={color} />
+      <View style={{ flex: 1, gap: spacing.xxs }}>
         <Text variant="label" color="muted">
           {title}
         </Text>
         <Text variant="body">{summarizeHistoryEntry(entry, settings)}</Text>
       </View>
-      <Icon name="chevron" size={16} color="muted" />
+      <Icon name="chevron" size={icons.xs} color="muted" />
     </Pressable>
   );
 }

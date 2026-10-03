@@ -10,6 +10,9 @@ import { MUSCLE_GROUP_LABELS } from '@/lib/muscle-groups';
 import type { WeightUnit } from '@/lib/units';
 import { useTheme } from '@/theme';
 
+/** Keeps the set numbers in a column so the weights line up under each other. */
+const SET_INDEX_WIDTH = 20;
+
 export interface WorkoutDetailScreenProps {
   workoutId: number;
 }
@@ -99,22 +102,18 @@ export function WorkoutDetailScreen({ workoutId }: WorkoutDetailScreenProps) {
 }
 
 function ExerciseBlock({ exercise, unit }: { exercise: WorkoutDetailExercise; unit: WeightUnit }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing, card, borderWidths } = useTheme();
 
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-        borderWidth: 1,
+        ...card,
         borderLeftColor: colors.gym,
-        borderLeftWidth: 3,
-        borderRadius: radii.lg,
-        padding: spacing.lg,
+        borderLeftWidth: borderWidths.accent,
         gap: spacing.sm,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xxs }}>
           <Text variant="heading">{exercise.name}</Text>
           <Text variant="caption" color="muted">
             {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
@@ -133,7 +132,7 @@ function ExerciseBlock({ exercise, unit }: { exercise: WorkoutDetailExercise; un
           <View
             key={set.id}
             style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <Text variant="caption" color="muted" style={{ width: 20 }}>
+            <Text variant="caption" color="muted" style={{ width: SET_INDEX_WIDTH }}>
               {index + 1}
             </Text>
             <Text variant="body">{formatSet(set, exercise.isBodyweight, unit)}</Text>

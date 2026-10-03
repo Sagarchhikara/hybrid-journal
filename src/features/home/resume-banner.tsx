@@ -20,7 +20,7 @@ import { useTheme } from '@/theme';
  */
 export function ResumeBanner() {
   const router = useRouter();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, icons, borderWidths } = useTheme();
   const { data: draft, refetch } = useDbQuery(readGymDraft, []);
 
   useFocusEffect(
@@ -59,9 +59,9 @@ export function ResumeBanner() {
         gap: spacing.md,
         backgroundColor: colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderLeftColor: colors.gym,
-        borderLeftWidth: 3,
+        borderLeftWidth: borderWidths.accent,
         borderRadius: radii.lg,
         marginBottom: spacing.lg,
         paddingLeft: spacing.lg,
@@ -78,8 +78,8 @@ export function ResumeBanner() {
           paddingVertical: spacing.lg,
           opacity: pressed ? 0.6 : 1,
         })}>
-        <Icon name="gym" size={22} color="gym" />
-        <View style={{ flex: 1, gap: 2 }}>
+        <Icon name="gym" size={icons.lg} color="gym" />
+        <View style={{ flex: 1, gap: spacing.xxs }}>
           <Text variant="heading">Resume workout</Text>
           <Text variant="caption" color="muted">
             {draft.name.trim() === '' ? 'Unnamed' : draft.name} · {formatDateKeyShort(draft.date)} ·{' '}
@@ -87,7 +87,7 @@ export function ResumeBanner() {
             {sets > 0 ? ` · ${sets} ${sets === 1 ? 'set' : 'sets'}` : ''}
           </Text>
         </View>
-        <Icon name="chevron" size={18} color="muted" />
+        <Icon name="chevron" size={icons.sm} color="muted" />
       </Pressable>
 
       <Pressable
@@ -100,7 +100,7 @@ export function ResumeBanner() {
           paddingVertical: spacing.lg,
           opacity: pressed ? 0.5 : 1,
         })}>
-        <Icon name="close" size={18} color="muted" />
+        <Icon name="close" size={icons.sm} color="muted" />
       </Pressable>
     </View>
   );

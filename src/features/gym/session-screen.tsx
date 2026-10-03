@@ -18,7 +18,7 @@ export interface SessionScreenProps {
 
 export function SessionScreen({ workoutId }: SessionScreenProps) {
   const router = useRouter();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, sizes, icons } = useTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
 
@@ -137,7 +137,7 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
 
         {draft.exercises.length === 0 ? (
           <View style={{ gap: spacing.sm, paddingVertical: spacing.xl, alignItems: 'center' }}>
-            <Icon name="gym" size={36} color="muted" />
+            <Icon name="gym" size={icons.empty} color="muted" />
             <Text color="muted" style={{ textAlign: 'center' }}>
               Add your first exercise to start logging sets.
             </Text>
@@ -165,8 +165,13 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
           accessibilityRole="button"
           accessibilityLabel={notesOpen ? 'Hide notes' : 'Add notes'}
           onPress={() => setNotesOpen((open) => !open)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 }}>
-          <Icon name={notesOpen ? 'chevron-up' : 'chevron-down'} size={18} color="muted" />
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+            minHeight: sizes.tapTarget,
+          }}>
+          <Icon name={notesOpen ? 'chevron-up' : 'chevron-down'} size={icons.sm} color="muted" />
           <Text color="muted">Notes{draft.notes.trim() === '' || notesOpen ? '' : ' · added'}</Text>
         </Pressable>
 

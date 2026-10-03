@@ -13,7 +13,7 @@ export interface ChipProps {
 }
 
 export function Chip({ label, onPress, selected = false, tint = 'accent' }: ChipProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, borderWidths } = useTheme();
 
   return (
     <Pressable
@@ -23,11 +23,11 @@ export function Chip({ label, onPress, selected = false, tint = 'accent' }: Chip
       style={({ pressed }) => ({
         backgroundColor: selected ? colors[tint] : colors.surface,
         borderColor: selected ? colors[tint] : colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.pill,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
-        minHeight: 38,
+        minHeight: sizes.chip,
         justifyContent: 'center',
         opacity: pressed ? 0.75 : 1,
       })}>

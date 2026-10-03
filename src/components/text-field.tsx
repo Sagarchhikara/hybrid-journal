@@ -7,23 +7,24 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
 }
 
 export function TextField({ style, multiline, ...rest }: TextFieldProps) {
-  const { colors, radii, spacing, typography } = useTheme();
+  const { colors, radii, spacing, typography, sizes, borderWidths } = useTheme();
 
   return (
     <TextInput
       multiline={multiline}
+      keyboardAppearance="dark"
       placeholderTextColor={colors.muted}
       style={[
         typography.body,
         {
           color: colors.text,
           backgroundColor: colors.surface,
-          borderWidth: 1,
+          borderWidth: borderWidths.hairline,
           borderColor: colors.border,
           borderRadius: radii.md,
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.md,
-          minHeight: multiline ? 88 : 48,
+          minHeight: multiline ? sizes.field * 2 : sizes.control,
           textAlignVertical: multiline ? 'top' : 'center',
         },
         style,

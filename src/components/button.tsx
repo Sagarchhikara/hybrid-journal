@@ -23,7 +23,7 @@ export function Button({
   loading = false,
   style,
 }: ButtonProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, borderWidths } = useTheme();
   const isInert = disabled || loading;
 
   const background =
@@ -44,8 +44,8 @@ export function Button({
           paddingHorizontal: spacing.lg,
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 48,
-          borderWidth: variant === 'secondary' ? 1 : 0,
+          minHeight: sizes.control,
+          borderWidth: variant === 'secondary' ? borderWidths.hairline : 0,
           borderColor: colors.border,
           opacity: isInert ? 0.5 : pressed ? 0.8 : 1,
         },

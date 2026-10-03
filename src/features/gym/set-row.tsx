@@ -2,7 +2,7 @@ import { Pressable, View } from 'react-native';
 
 import { Icon, NumberField, Text } from '@/components';
 import type { WeightUnit } from '@/lib/units';
-import { useTheme } from '@/theme';
+import { sizes, spacing as spacingTokens, typography, useTheme } from '@/theme';
 
 import { parseDecimalInput } from '@/lib/input';
 
@@ -32,12 +32,16 @@ export interface SetRowProps {
  * the reps box was ~33dp wide with ~1dp left for text, so typed reps were invisible.
  */
 const INDEX_WIDTH = 20;
-const STEP_SIZE = 44;
+const STEP_SIZE = sizes.tapTarget;
 const WEIGHT_FLEX = 1.4;
 const REPS_FLEX = 1;
 
 /** Slim variant of NumberField for the set grid; see the geometry note above. */
-const COMPACT_INPUT = { paddingHorizontal: 4, fontSize: 18, lineHeight: 24 } as const;
+const COMPACT_INPUT = {
+  paddingHorizontal: spacingTokens.xs,
+  fontSize: typography.heading.fontSize + 1,
+  lineHeight: typography.heading.lineHeight + 2,
+} as const;
 
 export function SetRowHeader({ isBodyweight, unit }: { isBodyweight: boolean; unit: WeightUnit }) {
   const { spacing } = useTheme();
@@ -84,7 +88,7 @@ export function SetRow({
   onAddDrop,
   onToggleDrop,
 }: SetRowProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing, borderWidths } = useTheme();
 
   function step(direction: 1 | -1): void {
     const next = stepWeight(parseDecimalInput(set.weight), direction, unit);
@@ -175,13 +179,13 @@ export function SetRow({
         ) : null}
       </View>
 
-      <View style={{ height: 1, backgroundColor: colors.border, borderRadius: radii.sm }} />
+      <View style={{ height: borderWidths.hairline, backgroundColor: colors.divider }} />
     </View>
   );
 }
 
 function StepButton({ direction, onPress }: { direction: 1 | -1; onPress: () => void }) {
-  const { colors, radii } = useTheme();
+  const { colors, radii, icons, borderWidths } = useTheme();
 
   return (
     <Pressable
@@ -196,10 +200,10 @@ function StepButton({ direction, onPress }: { direction: 1 | -1; onPress: () => 
         justifyContent: 'center',
         backgroundColor: pressed ? colors.accent : colors.surfaceRaised,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
       })}>
-      <Icon name={direction === 1 ? 'plus' : 'minus'} size={18} color="text" />
+      <Icon name={direction === 1 ? 'plus' : 'minus'} size={icons.sm} color="text" />
     </Pressable>
   );
 }
@@ -219,7 +223,7 @@ function SmallAction({
   danger?: boolean;
   active?: boolean;
 }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
 
   return (
     <Pressable
@@ -229,19 +233,19 @@ function SmallAction({
       onPress={onPress}
       hitSlop={spacing.xs}
       style={({ pressed }) => ({
-        minWidth: 44,
-        minHeight: 36,
+        minWidth: sizes.tapTarget,
+        minHeight: sizes.iconButton,
         paddingHorizontal: spacing.sm,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: active ? colors.accent : colors.surface,
         borderColor: danger ? colors.danger : colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.sm,
         opacity: pressed ? 0.6 : 1,
       })}>
       {icon ? (
-        <Icon name={icon} size={16} color={danger ? 'danger' : 'muted'} />
+        <Icon name={icon} size={icons.xs} color={danger ? 'danger' : 'muted'} />
       ) : (
         <Text variant="caption" color={active ? 'accentText' : 'muted'}>
           {label}

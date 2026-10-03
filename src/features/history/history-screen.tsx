@@ -121,7 +121,7 @@ function DateHeader({ date }: { date: string }) {
 
 function EmptyState() {
   const router = useRouter();
-  const { spacing } = useTheme();
+  const { spacing, icons } = useTheme();
 
   return (
     <View
@@ -132,7 +132,7 @@ function EmptyState() {
         gap: spacing.md,
         paddingHorizontal: spacing.xxl,
       }}>
-      <Icon name="history" size={40} color="muted" />
+      <Icon name="history" size={icons.empty} color="muted" />
       <Text variant="title">Nothing logged yet</Text>
       <Text color="muted" style={{ textAlign: 'center' }}>
         Runs, sleep and body measurements will show up here, newest first.

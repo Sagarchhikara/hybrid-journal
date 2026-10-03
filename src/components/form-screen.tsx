@@ -22,7 +22,7 @@ export interface FormScreenProps {
  * scrolling around hunting for Save.
  */
 export function FormScreen({ children, footer, adjustKeyboardInsets = false }: FormScreenProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, borderWidths } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -43,7 +43,7 @@ export function FormScreen({ children, footer, adjustKeyboardInsets = false }: F
           style={{
             padding: spacing.lg,
             paddingBottom: Math.max(insets.bottom, spacing.lg),
-            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopWidth: borderWidths.hairline,
             borderTopColor: colors.border,
             backgroundColor: colors.background,
             gap: spacing.sm,

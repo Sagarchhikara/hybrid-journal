@@ -216,8 +216,10 @@ export function RunForm({ runId }: RunFormProps) {
 }
 
 function Labelled({ label, value }: { label: string; value: string }) {
+  const { spacing } = useTheme();
+
   return (
-    <View style={{ gap: 2 }}>
+    <View style={{ gap: spacing.xxs }}>
       <Text variant="caption" color="muted">
         {label.toUpperCase()}
       </Text>

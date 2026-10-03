@@ -43,7 +43,7 @@ export function ExerciseCard({
   setErrors,
   dispatch,
 }: ExerciseCardProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing, card, borderWidths } = useTheme();
   const exerciseLocalId = exercise.localId;
 
   const recall = formatLastSession(lastSession, exercise.isBodyweight, unit);
@@ -72,17 +72,13 @@ export function ExerciseCard({
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-        borderWidth: 1,
+        ...card,
         borderLeftColor: colors.gym,
-        borderLeftWidth: 3,
-        borderRadius: radii.lg,
-        padding: spacing.lg,
+        borderLeftWidth: borderWidths.accent,
         gap: spacing.md,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xxs }}>
           <Text variant="heading">{exercise.name}</Text>
           {recall ? (
             <Text variant="caption" color="muted">
@@ -167,7 +163,7 @@ function IconAction({
   onPress: () => void;
   disabled?: boolean;
 }) {
-  const { spacing } = useTheme();
+  const { spacing, sizes, icons } = useTheme();
 
   return (
     <Pressable
@@ -178,13 +174,13 @@ function IconAction({
       onPress={onPress}
       hitSlop={spacing.xs}
       style={({ pressed }) => ({
-        width: 36,
-        height: 36,
+        width: sizes.iconButton,
+        height: sizes.iconButton,
         alignItems: 'center',
         justifyContent: 'center',
         opacity: disabled ? 0.25 : pressed ? 0.5 : 1,
       })}>
-      <Icon name={icon} size={20} color="muted" />
+      <Icon name={icon} size={icons.md} color="muted" />
     </Pressable>
   );
 }
@@ -198,7 +194,7 @@ function TextAction({
   icon?: 'plus';
   onPress: () => void;
 }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
 
   return (
     <Pressable
@@ -211,13 +207,13 @@ function TextAction({
         gap: spacing.xs,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
-        minHeight: 44,
+        minHeight: sizes.tapTarget,
         backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.pill,
       })}>
-      {icon ? <Icon name={icon} size={16} color="accent" /> : null}
+      {icon ? <Icon name={icon} size={icons.xs} color="accent" /> : null}
       <Text variant="label" color="accent">
         {label}
       </Text>

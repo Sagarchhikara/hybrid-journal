@@ -19,7 +19,7 @@ import { splitLibrary } from './library-data';
  * the data version, so the list refetches itself after every edit.
  */
 export function ExerciseLibraryScreen() {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, icons, borderWidths } = useTheme();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [editing, setEditing] = useState<Exercise | null>(null);
@@ -72,7 +72,7 @@ export function ExerciseLibraryScreen() {
 
         {empty ? (
           <View style={{ gap: spacing.md, paddingVertical: spacing.xl, alignItems: 'center' }}>
-            <Icon name="gym" size={36} color="muted" />
+            <Icon name="gym" size={icons.empty} color="muted" />
             <Text color="muted" style={{ textAlign: 'center' }}>
               {trimmed === '' ? 'Your library is empty.' : `Nothing matches “${trimmed}”.`}
             </Text>
@@ -112,7 +112,7 @@ export function ExerciseLibraryScreen() {
           style={{
             marginTop: spacing.xl,
             padding: spacing.lg,
-            borderWidth: 1,
+            borderWidth: borderWidths.hairline,
             borderColor: colors.border,
             borderRadius: radii.md,
           }}>
@@ -178,7 +178,7 @@ function Section({
 }
 
 function LibraryRow({ exercise, onPress }: { exercise: Exercise; onPress: () => void }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
   const archived = exercise.archivedAt !== null;
 
   return (
@@ -192,11 +192,11 @@ function LibraryRow({ exercise, onPress }: { exercise: Exercise; onPress: () => 
         gap: spacing.md,
         backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
-        minHeight: 56,
+        minHeight: sizes.row,
         opacity: archived ? 0.6 : 1,
       })}>
       <View style={{ flex: 1 }}>
@@ -207,7 +207,7 @@ function LibraryRow({ exercise, onPress }: { exercise: Exercise; onPress: () => 
           {exercise.isCustom ? ' · yours' : ''}
         </Text>
       </View>
-      <Icon name="chevron" size={18} color="muted" />
+      <Icon name="chevron" size={icons.sm} color="muted" />
     </Pressable>
   );
 }

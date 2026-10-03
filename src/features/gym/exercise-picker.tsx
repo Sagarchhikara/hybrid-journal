@@ -34,7 +34,7 @@ type Scope = { kind: 'day' } | { kind: 'all' } | { kind: 'group'; group: MuscleG
  * can be swapped for a single group or for the whole library at any point.
  */
 export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePickerProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, icons, borderWidths } = useTheme();
   const [query, setQuery] = useState('');
 
   const dayName = (workoutName ?? '').trim();
@@ -124,7 +124,7 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
             onPress={onCancel}
             hitSlop={spacing.sm}
             style={{ padding: spacing.sm }}>
-            <Icon name="close" size={22} color="muted" />
+            <Icon name="close" size={icons.lg} color="muted" />
           </Pressable>
         </View>
 
@@ -226,7 +226,7 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
       <View
         style={{
           padding: spacing.lg,
-          borderTopWidth: 1,
+          borderTopWidth: borderWidths.hairline,
           borderTopColor: colors.border,
           borderRadius: radii.sm,
         }}>
@@ -254,7 +254,7 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
 }
 
 function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () => void }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
 
   return (
     <Pressable
@@ -267,11 +267,11 @@ function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () =>
         gap: spacing.md,
         backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
-        minHeight: 56,
+        minHeight: sizes.row,
       })}>
       <View style={{ flex: 1 }}>
         <Text variant="body">{exercise.name}</Text>
@@ -280,7 +280,7 @@ function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () =>
           {exercise.isBodyweight ? ' · bodyweight' : ''}
         </Text>
       </View>
-      <Icon name="plus" size={18} color="accent" />
+      <Icon name="plus" size={icons.sm} color="accent" />
     </Pressable>
   );
 }
@@ -303,7 +303,7 @@ function CreateRow({
   defaultGroup: MuscleGroup;
   onCreated: (exercise: Exercise) => void;
 }) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, borderWidths } = useTheme();
   const [group, setGroup] = useState<MuscleGroup>(defaultGroup);
   const [bodyweight, setBodyweight] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -340,7 +340,7 @@ function CreateRow({
         gap: spacing.md,
         backgroundColor: colors.surface,
         borderColor: colors.accent,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.lg,
       }}>
       <Text variant="heading">Create “{name}”</Text>
