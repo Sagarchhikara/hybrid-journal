@@ -9,6 +9,7 @@ import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
 import { useTheme } from '@/theme';
 
 import type { NewExerciseInput } from './draft';
+import { muscleGroupsForWorkout } from './workout-names';
 
 const GROUP_LABELS: Record<MuscleGroup, string> = {
   chest: 'Chest',
@@ -27,22 +28,50 @@ const GROUP_LABELS: Record<MuscleGroup, string> = {
 export interface ExercisePickerProps {
   onPick: (exercise: NewExerciseInput) => void;
   onCancel: () => void;
+  /** The workout's name, which narrows the list to the groups that day trains. */
+  workoutName?: string;
 }
+
+/**
+ * What the list is currently showing: the workout day's groups, one group on its own, or
+ * the whole library.
+ */
+type Scope = { kind: 'day' } | { kind: 'all' } | { kind: 'group'; group: MuscleGroup };
 
 /**
  * Search, filter and pick. One tap adds and closes — multi-select would save a tap at the
  * cost of a confirm step, and the whole screen is judged on taps-to-logged.
+ *
+ * On a named split day the list opens already narrowed to that day's muscle groups, so
+ * Push does not offer leg curls. The narrowing is a default and not a rule: the day chip
+ * can be swapped for a single group or for the whole library at any point.
  */
-export function ExercisePicker({ onPick, onCancel }: ExercisePickerProps) {
+export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePickerProps) {
   const { colors, radii, spacing } = useTheme();
   const [query, setQuery] = useState('');
-  const [group, setGroup] = useState<MuscleGroup | null>(null);
+
+  const dayName = (workoutName ?? '').trim();
+  const dayGroups = muscleGroupsForWorkout(dayName);
+
+  // Starts on the day's groups when the name implies any, otherwise on everything.
+  const [scope, setScope] = useState<Scope>(dayGroups ? { kind: 'day' } : { kind: 'all' });
+  // A name typed after the picker opened would otherwise leave an impossible scope.
+  const effectiveScope: Scope = scope.kind === 'day' && !dayGroups ? { kind: 'all' } : scope;
+
+  const groups: readonly MuscleGroup[] =
+    effectiveScope.kind === 'day'
+      ? (dayGroups ?? [])
+      : effectiveScope.kind === 'group'
+        ? [effectiveScope.group]
+        : [];
 
   const trimmed = query.trim();
+  // useDbQuery identifies a run by its deps, so the group list goes in as a string.
+  const groupsKey = groups.join(',');
 
   const { data: matches } = useDbQuery(
-    () => searchExercises({ query: trimmed, muscleGroup: group ?? undefined }),
-    [trimmed, group],
+    () => searchExercises({ query: trimmed, muscleGroups: groups }),
+    [trimmed, groupsKey],
   );
   const { data: recentIds } = useDbQuery(() => getRecentExerciseIds(6), []);
 
@@ -56,6 +85,20 @@ export function ExercisePicker({ onPick, onCancel }: ExercisePickerProps) {
     const recentSet = new Set(recent.map((exercise) => exercise.id));
     return { recent, rest: all.filter((exercise) => !recentSet.has(exercise.id)) };
   }, [matches, recentIds]);
+
+  // The day's groups lead the chip row; the rest keep the library's own order.
+  const orderedGroups = useMemo(() => {
+    if (!dayGroups) return MUSCLE_GROUPS;
+    const inDay = new Set(dayGroups);
+    return [...dayGroups, ...MUSCLE_GROUPS.filter((value) => !inDay.has(value))];
+  }, [dayGroups]);
+
+  // Whatever is filtered now is the group a newly created exercise most likely belongs to.
+  const createDefaultGroup: MuscleGroup =
+    effectiveScope.kind === 'group' ? effectiveScope.group : (dayGroups?.[0] ?? 'chest');
+
+  const filterLabel =
+    effectiveScope.kind === 'group' ? GROUP_LABELS[effectiveScope.group].toLowerCase() : dayName;
 
   const normalized = normalizeExerciseName(trimmed);
   const hasExactMatch = (matches ?? []).some(
@@ -98,13 +141,34 @@ export function ExercisePicker({ onPick, onCancel }: ExercisePickerProps) {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-            <Chip label="All" selected={group === null} onPress={() => setGroup(null)} />
-            {MUSCLE_GROUPS.map((value) => (
+            {dayGroups ? (
+              <Chip
+                label={dayName}
+                tint="gym"
+                selected={effectiveScope.kind === 'day'}
+                onPress={() => setScope({ kind: 'day' })}
+              />
+            ) : null}
+            <Chip
+              label="All"
+              selected={effectiveScope.kind === 'all'}
+              onPress={() => setScope({ kind: 'all' })}
+            />
+            {/* On a split day, that day's groups first: they are the ones being trained. */}
+            {orderedGroups.map((value) => (
               <Chip
                 key={value}
                 label={GROUP_LABELS[value]}
-                selected={group === value}
-                onPress={() => setGroup(group === value ? null : value)}
+                selected={effectiveScope.kind === 'group' && effectiveScope.group === value}
+                onPress={() =>
+                  setScope(
+                    effectiveScope.kind === 'group' && effectiveScope.group === value
+                      ? dayGroups
+                        ? { kind: 'day' }
+                        : { kind: 'all' }
+                      : { kind: 'group', group: value },
+                  )
+                }
               />
             ))}
           </View>
@@ -114,7 +178,9 @@ export function ExercisePicker({ onPick, onCancel }: ExercisePickerProps) {
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl * 2 }}
         keyboardShouldPersistTaps="handled">
-        {canCreate ? <CreateRow name={normalized} onCreated={pick} /> : null}
+        {canCreate ? (
+          <CreateRow name={normalized} defaultGroup={createDefaultGroup} onCreated={pick} />
+        ) : null}
 
         {recent.length > 0 ? (
           <Section title="Recently used">
@@ -125,17 +191,38 @@ export function ExercisePicker({ onPick, onCancel }: ExercisePickerProps) {
         ) : null}
 
         {rest.length > 0 ? (
-          <Section title={recent.length > 0 ? 'All exercises' : undefined}>
+          <Section
+            title={
+              recent.length > 0
+                ? effectiveScope.kind === 'all'
+                  ? 'All exercises'
+                  : `${filterLabel} exercises`
+                : undefined
+            }>
             {rest.map((exercise) => (
               <ExerciseRow key={exercise.id} exercise={exercise} onPress={() => pick(exercise)} />
             ))}
           </Section>
         ) : null}
 
-        {matches !== undefined && matches.length === 0 && !canCreate ? (
-          <Text color="muted" style={{ marginTop: spacing.xl, textAlign: 'center' }}>
-            Nothing matches that.
-          </Text>
+        {matches !== undefined && matches.length === 0 ? (
+          <View style={{ marginTop: spacing.xl, gap: spacing.md, alignItems: 'center' }}>
+            {canCreate ? null : (
+              <Text color="muted" style={{ textAlign: 'center' }}>
+                {effectiveScope.kind === 'all'
+                  ? 'Nothing matches that.'
+                  : `No ${filterLabel} exercises match that.`}
+              </Text>
+            )}
+            {/* A filtered search that finds nothing is a dead end without this. */}
+            {effectiveScope.kind === 'all' ? null : (
+              <Button
+                label="Search all exercises"
+                variant="secondary"
+                onPress={() => setScope({ kind: 'all' })}
+              />
+            )}
+          </View>
         ) : null}
       </ScrollView>
 
@@ -206,9 +293,18 @@ function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () =>
  * exists under a different case or spacing resolves to the existing exercise rather than
  * failing, so this can never produce a duplicate or a raw SQLite error.
  */
-function CreateRow({ name, onCreated }: { name: string; onCreated: (exercise: Exercise) => void }) {
+function CreateRow({
+  name,
+  defaultGroup,
+  onCreated,
+}: {
+  name: string;
+  /** Pre-selected from the filter in force, which is nearly always the right group. */
+  defaultGroup: MuscleGroup;
+  onCreated: (exercise: Exercise) => void;
+}) {
   const { colors, radii, spacing } = useTheme();
-  const [group, setGroup] = useState<MuscleGroup>('chest');
+  const [group, setGroup] = useState<MuscleGroup>(defaultGroup);
   const [bodyweight, setBodyweight] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();

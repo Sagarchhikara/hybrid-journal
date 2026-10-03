@@ -187,6 +187,7 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
         presentationStyle="pageSheet"
         onRequestClose={() => setPickerOpen(false)}>
         <ExercisePicker
+          workoutName={draft.name}
           onCancel={() => setPickerOpen(false)}
           onPick={(exercise) => {
             dispatch({ type: 'addExercise', exercise });

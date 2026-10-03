@@ -53,6 +53,36 @@ describe('searchExercises', () => {
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
 
+  it('filters by several muscle groups at once, for a split day', async () => {
+    const results = await searchExercises({ muscleGroups: ['chest', 'shoulders', 'triceps'] });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(
+      results.every((exercise) => ['chest', 'shoulders', 'triceps'].includes(exercise.muscleGroup)),
+    ).toBe(true);
+    expect(results.some((exercise) => exercise.name === 'Barbell Bench Press')).toBe(true);
+    expect(results.some((exercise) => exercise.name === 'Leg Curl')).toBe(false);
+  });
+
+  it('treats an empty group list as no restriction rather than as nothing', async () => {
+    const restricted = await searchExercises({ muscleGroups: [] });
+    const all = await searchExercises();
+
+    expect(restricted.length).toBe(all.length);
+  });
+
+  it('combines a group list with the search term', async () => {
+    const results = await searchExercises({ query: 'press', muscleGroups: ['chest', 'triceps'] });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((exercise) => /press/i.test(exercise.name))).toBe(true);
+    expect(results.every((exercise) => ['chest', 'triceps'].includes(exercise.muscleGroup))).toBe(
+      true,
+    );
+    // Shoulders are not in the list, so Overhead Press is out.
+    expect(results.some((exercise) => exercise.name === 'Overhead Press')).toBe(false);
+  });
+
   it('filters by muscle group', async () => {
     const results = await searchExercises({ muscleGroup: 'biceps' });
     expect(results.length).toBeGreaterThan(0);

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, like, sql } from 'drizzle-orm';
 
 import { db } from '../client';
 import { bumpDataVersion } from '../data-version';
@@ -16,12 +16,20 @@ export interface ExerciseSearch {
   /** Substring match. The name column is NOCASE, so case is already ignored. */
   query?: string;
   muscleGroup?: MuscleGroup;
+  /**
+   * Restrict to several groups at once — what a split day needs, since Push is chest,
+   * shoulders and triceps rather than any single group. An empty array matches nothing,
+   * which is treated as "no restriction": a caller that computed no groups wants the
+   * whole library, not a blank list.
+   */
+  muscleGroups?: readonly MuscleGroup[];
   includeArchived?: boolean;
 }
 
 /** Alphabetical. Archived exercises are hidden unless explicitly asked for. */
 export async function searchExercises(options: ExerciseSearch = {}): Promise<Exercise[]> {
   const term = options.query?.trim() ?? '';
+  const groups = options.muscleGroups ?? [];
 
   return db
     .select()
@@ -32,6 +40,7 @@ export async function searchExercises(options: ExerciseSearch = {}): Promise<Exe
         options.muscleGroup === undefined
           ? undefined
           : eq(exercises.muscleGroup, options.muscleGroup),
+        groups.length === 0 ? undefined : inArray(exercises.muscleGroup, [...groups]),
         // LIKE on a NOCASE column is case-insensitive; escape the wildcards a user types.
         term === '' ? undefined : like(exercises.name, `%${escapeLike(term)}%`),
       ),
