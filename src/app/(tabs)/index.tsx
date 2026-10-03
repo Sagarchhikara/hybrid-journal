@@ -12,9 +12,11 @@ export default function HomeScreen() {
 
   return (
     <Screen scroll>
-      <View style={{ gap: spacing.xs, marginBottom: spacing.xl }}>
+      <View style={{ gap: spacing.xxs, marginBottom: spacing.xl }}>
+        <Text variant="label" color="muted">
+          {formatDateKeyLong(todayLocal()).toUpperCase()}
+        </Text>
         <Text variant="display">Today</Text>
-        <Text color="muted">{formatDateKeyLong(todayLocal())}</Text>
       </View>
 
       <ResumeBanner />

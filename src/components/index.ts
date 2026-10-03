@@ -8,6 +8,7 @@ export { FormScreen, type FormScreenProps } from './form-screen';
 export { ActivityDot, Icon, type IconName, type IconProps } from './icon';
 export { ListRow, type ListRowProps } from './list-row';
 export { NumberField, type NumberFieldProps } from './number-field';
+export { ProgressRing, type ProgressRingProps } from './progress-ring';
 export { Screen, type ScreenProps } from './screen';
 export { Section, type SectionProps } from './section';
 export {

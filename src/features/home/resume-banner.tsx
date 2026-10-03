@@ -20,7 +20,7 @@ import { useTheme } from '@/theme';
  */
 export function ResumeBanner() {
   const router = useRouter();
-  const { colors, radii, spacing, icons, borderWidths } = useTheme();
+  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
   const { data: draft, refetch } = useDbQuery(readGymDraft, []);
 
   useFocusEffect(
@@ -56,15 +56,12 @@ export function ResumeBanner() {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.md,
         backgroundColor: colors.surface,
-        borderColor: colors.border,
+        borderColor: colors.gym,
         borderWidth: borderWidths.hairline,
-        borderLeftColor: colors.gym,
-        borderLeftWidth: borderWidths.accent,
         borderRadius: radii.lg,
         marginBottom: spacing.lg,
-        paddingLeft: spacing.lg,
+        overflow: 'hidden',
       }}>
       <Pressable
         accessibilityRole="button"
@@ -76,9 +73,23 @@ export function ResumeBanner() {
           alignItems: 'center',
           gap: spacing.md,
           paddingVertical: spacing.lg,
-          opacity: pressed ? 0.6 : 1,
+          paddingLeft: spacing.lg,
+          backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
         })}>
-        <Icon name="gym" size={icons.lg} color="gym" />
+        {/* A lime disc rather than a bare glyph: this is the one thing on Home that is
+            unfinished, and it should read as the thing to tap before the stats do. */}
+        <View
+          style={{
+            width: sizes.iconButton,
+            height: sizes.iconButton,
+            borderRadius: radii.pill,
+            backgroundColor: colors.gym,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Icon name="gym" size={icons.md} color="accentText" />
+        </View>
+
         <View style={{ flex: 1, gap: spacing.xxs }}>
           <Text variant="heading">Resume workout</Text>
           <Text variant="caption" color="muted">
