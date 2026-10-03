@@ -167,10 +167,6 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl * 2 }}
         keyboardShouldPersistTaps="handled">
-        {canCreate ? (
-          <CreateRow name={normalized} defaultGroup={createDefaultGroup} onCreated={pick} />
-        ) : null}
-
         {recent.length > 0 ? (
           <Section title="Recently used">
             {recent.map((exercise) => (
@@ -192,6 +188,18 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
               <ExerciseRow key={exercise.id} exercise={exercise} onPress={() => pick(exercise)} />
             ))}
           </Section>
+        ) : null}
+
+        {/* After the matches, not before them: when you search "bench" you are almost
+            always reaching for a lift you already have, and a create form above the
+            results pushes them off the screen. */}
+        {canCreate ? (
+          <CreateRow
+            name={normalized}
+            dayGroups={dayGroups}
+            defaultGroup={createDefaultGroup}
+            onCreated={pick}
+          />
         ) : null}
 
         {matches !== undefined && matches.length === 0 ? (
@@ -284,10 +292,13 @@ function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () =>
  */
 function CreateRow({
   name,
+  dayGroups,
   defaultGroup,
   onCreated,
 }: {
   name: string;
+  /** The groups this workout day trains, or null when the name implies none. */
+  dayGroups: readonly MuscleGroup[] | null;
   /** Pre-selected from the filter in force, which is nearly always the right group. */
   defaultGroup: MuscleGroup;
   onCreated: (exercise: Exercise) => void;
@@ -297,6 +308,13 @@ function CreateRow({
   const [bodyweight, setBodyweight] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [allGroups, setAllGroups] = useState(false);
+
+  // Only the day's groups, because a lift you are adding mid-Push is a pushing lift.
+  // Not a rule, though: the toggle is there for the accessory that does not fit, and a
+  // group picked before the toggle was flipped stays picked.
+  const offered: readonly MuscleGroup[] =
+    dayGroups === null || allGroups || !dayGroups.includes(group) ? MUSCLE_GROUPS : dayGroups;
 
   async function create(): Promise<void> {
     setBusy(true);
@@ -329,7 +347,7 @@ function CreateRow({
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-          {MUSCLE_GROUPS.map((value) => (
+          {offered.map((value) => (
             <Chip
               key={value}
               label={MUSCLE_GROUP_LABELS[value]}
@@ -337,6 +355,9 @@ function CreateRow({
               onPress={() => setGroup(value)}
             />
           ))}
+          {offered === MUSCLE_GROUPS ? null : (
+            <Chip label="More…" selected={false} onPress={() => setAllGroups(true)} />
+          )}
         </View>
       </ScrollView>
 
