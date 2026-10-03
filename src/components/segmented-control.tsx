@@ -52,7 +52,12 @@ export function SegmentedControl<T extends string>({
               backgroundColor: selected ? colors.accent : 'transparent',
               opacity: pressed && !selected ? 0.6 : 1,
             })}>
-            <Text variant="label" color={selected ? 'accentText' : 'muted'} numberOfLines={1}>
+            {/* Heavier as well as lime: the fill alone would be the only thing marking
+                the choice, and these sit three to a row at 13pt. */}
+            <Text
+              variant={selected ? 'labelStrong' : 'label'}
+              color={selected ? 'accentText' : 'muted'}
+              numberOfLines={1}>
               {option.label}
             </Text>
           </Pressable>

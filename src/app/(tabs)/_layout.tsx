@@ -2,11 +2,11 @@ import { Tabs, useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Icon, Text } from '@/components';
+import { Icon, Text, type IconName } from '@/components';
 import { useTheme } from '@/theme';
 
 export default function TabsLayout() {
-  const { colors, typography, spacing, sizes, icons } = useTheme();
+  const { colors, typography, spacing, sizes, borderWidths } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -17,11 +17,13 @@ export default function TabsLayout() {
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.muted,
           tabBarLabelStyle: typography.caption,
+          tabBarActiveBackgroundColor: 'transparent',
           tabBarStyle: {
             backgroundColor: colors.surface,
-            borderTopColor: colors.border,
+            borderTopColor: colors.divider,
+            borderTopWidth: borderWidths.hairline,
             height: sizes.tabBar + insets.bottom,
-            paddingTop: spacing.xs,
+            paddingTop: spacing.sm,
             paddingBottom: insets.bottom,
           },
         }}>
@@ -29,41 +31,53 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Home',
-            tabBarIcon: ({ focused }) => (
-              <Icon name="home" size={icons.lg} color={focused ? 'accent' : 'muted'} />
-            ),
+            tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="history"
           options={{
             title: 'History',
-            tabBarIcon: ({ focused }) => (
-              <Icon name="history" size={icons.lg} color={focused ? 'accent' : 'muted'} />
-            ),
+            tabBarIcon: ({ focused }) => <TabIcon name="history" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="stats"
           options={{
             title: 'Stats',
-            tabBarIcon: ({ focused }) => (
-              <Icon name="stats" size={icons.lg} color={focused ? 'accent' : 'muted'} />
-            ),
+            tabBarIcon: ({ focused }) => <TabIcon name="stats" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="you"
           options={{
             title: 'You',
-            tabBarIcon: ({ focused }) => (
-              <Icon name="you" size={icons.lg} color={focused ? 'accent' : 'muted'} />
-            ),
+            tabBarIcon: ({ focused }) => <TabIcon name="you" focused={focused} />,
           }}
         />
       </Tabs>
 
       <LogButton bottom={insets.bottom + sizes.tabBar + spacing.md} />
+    </View>
+  );
+}
+
+/**
+ * The selected tab gets a lime pill behind its glyph as well as the lime tint. Colour on
+ * its own would be the only thing separating the current tab from the other three.
+ */
+function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
+  const { colors, radii, spacing, icons } = useTheme();
+
+  return (
+    <View
+      style={{
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+        borderRadius: radii.pill,
+        backgroundColor: focused ? colors.accentSurface : 'transparent',
+      }}>
+      <Icon name={name} size={icons.lg} color={focused ? 'accent' : 'muted'} />
     </View>
   );
 }
@@ -87,13 +101,14 @@ function LogButton({ bottom }: { bottom: number }) {
             alignSelf: 'center',
             flexDirection: 'row',
             alignItems: 'center',
-            gap: spacing.xs,
+            gap: spacing.sm,
             backgroundColor: colors.accent,
             borderRadius: radii.pill,
             paddingVertical: spacing.md,
             paddingHorizontal: spacing.xl,
             minHeight: sizes.control,
             opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
           },
           shadows.floating,
         ]}>

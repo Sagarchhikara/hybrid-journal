@@ -35,7 +35,7 @@ export function DateField({ value, onChange, maxDate = todayLocal() }: DateField
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceRaised,
         borderColor: colors.border,
         borderWidth: borderWidths.hairline,
         borderRadius: radii.md,

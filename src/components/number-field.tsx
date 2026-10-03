@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { TextInput, type StyleProp, type TextInputProps, type TextStyle } from 'react-native';
 
 import { useTheme } from '@/theme';
@@ -14,12 +14,16 @@ export interface NumberFieldProps extends Omit<TextInputProps, 'style' | 'keyboa
 /**
  * A numeric text input. Held as a string by the caller so partial entry like '6.' is
  * possible while typing; parsing happens at validation time, never on each keystroke.
+ *
+ * Invalid beats focused on the border: a field you are typing into because it is wrong
+ * should keep saying so. See TextField for why focus is drawn at all.
  */
 export const NumberField = forwardRef<TextInput, NumberFieldProps>(function NumberField(
-  { decimal = false, invalid = false, align = 'left', style, ...rest },
+  { decimal = false, invalid = false, align = 'left', style, onFocus, onBlur, ...rest },
   ref,
 ) {
   const { colors, radii, spacing, typography, sizes, borderWidths } = useTheme();
+  const [focused, setFocused] = useState(false);
 
   return (
     <TextInput
@@ -29,13 +33,21 @@ export const NumberField = forwardRef<TextInput, NumberFieldProps>(function Numb
       selectTextOnFocus
       keyboardAppearance="dark"
       placeholderTextColor={colors.muted}
+      onFocus={(event) => {
+        setFocused(true);
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        setFocused(false);
+        onBlur?.(event);
+      }}
       style={[
         typography.title,
         {
           color: colors.text,
-          backgroundColor: colors.surface,
+          backgroundColor: colors.surfaceRaised,
           borderWidth: borderWidths.hairline,
-          borderColor: invalid ? colors.danger : colors.border,
+          borderColor: invalid ? colors.danger : focused ? colors.accent : colors.border,
           borderRadius: radii.md,
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.md,

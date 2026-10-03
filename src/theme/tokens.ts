@@ -199,6 +199,14 @@ export const typography = {
   heading: { fontFamily: sans, fontSize: 17, lineHeight: 22, fontWeight: '600' },
   body: { fontFamily: sans, fontSize: 15, lineHeight: 21, fontWeight: '400' },
   label: { fontFamily: sans, fontSize: 13, lineHeight: 18, fontWeight: '600', letterSpacing: 0.4 },
+  /** Same metrics as `label`, heavier. For a selected state that must not resize. */
+  labelStrong: {
+    fontFamily: sans,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
   caption: { fontFamily: sans, fontSize: 12, lineHeight: 16, fontWeight: '400' },
   mono: { fontFamily: mono, fontSize: 14, lineHeight: 20, fontWeight: '400' },
 } as const;
