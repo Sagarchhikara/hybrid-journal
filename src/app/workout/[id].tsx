@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { Screen, Text } from '@/components';
+import { EmptyState, Screen } from '@/components';
 import { WorkoutDetailScreen } from '@/features/history';
 
 /** /workout/3 — a finished workout, read-only, reached from History. */
@@ -11,7 +11,11 @@ export default function Workout() {
   if (!Number.isInteger(workoutId)) {
     return (
       <Screen edgeToEdgeTop={false}>
-        <Text variant="heading">Not a workout</Text>
+        <EmptyState
+          icon="history"
+          title="Not a workout"
+          body="That address does not point at anything we can show."
+        />
       </Screen>
     );
   }

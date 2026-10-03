@@ -1,6 +1,4 @@
-import { View } from 'react-native';
-
-import { Field, SegmentedControl, Text } from '@/components';
+import { Field, Section, SegmentedControl } from '@/components';
 import { setDistanceUnit, setWeightUnit, useSettings } from '@/db';
 import { DISTANCE_UNITS, WEIGHT_UNITS } from '@/lib/units';
 import { useTheme } from '@/theme';
@@ -24,9 +22,7 @@ export function UnitsSection() {
   const { settings } = useSettings();
 
   return (
-    <View style={{ gap: spacing.lg }}>
-      <Text variant="heading">Units</Text>
-
+    <Section title="Units" style={{ gap: spacing.lg }}>
       <Field label="Distance">
         <SegmentedControl
           options={DISTANCE_OPTIONS}
@@ -42,6 +38,6 @@ export function UnitsSection() {
           onChange={(unit) => void setWeightUnit(unit)}
         />
       </Field>
-    </View>
+    </Section>
   );
 }

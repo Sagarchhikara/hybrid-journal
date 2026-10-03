@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-import { Screen, Text } from '@/components';
+import { EmptyState, Screen } from '@/components';
 import { useDatabase, useDataFreshness } from '@/db';
 import { useTheme } from '@/theme';
 
@@ -83,8 +83,7 @@ function Booting() {
 function DatabaseError({ error }: { error: Error }) {
   return (
     <Screen>
-      <Text variant="title">Could not open your journal</Text>
-      <Text color="muted">{error.message}</Text>
+      <EmptyState fill icon="close" title="Could not open your journal" body={error.message} />
     </Screen>
   );
 }
