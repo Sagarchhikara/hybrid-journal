@@ -184,19 +184,87 @@ describe('getLastSession picks the right workout', () => {
     expect(await getLastSession(rowId, { onOrBefore: '2026-10-01' })).toBeNull();
   });
 
+  /** Pins created_at so a same-date ordering assertion is not at the mercy of the clock. */
+  async function setCreatedAt(workoutId: number, ms: number): Promise<void> {
+    await db
+      .update(gymWorkouts)
+      .set({ createdAt: new Date(ms) })
+      .where(eq(gymWorkouts.id, workoutId));
+  }
+
+  it('recalls the earlier same-date workout when editing the later one', async () => {
+    // Two sessions on one day — a morning and an evening workout — and the evening one is
+    // being edited. The cutoff cannot separate them, so only the exclusion and the
+    // tiebreak can: the morning session must come back.
+    const morning = await saveWorkout(bench('2026-09-27', [70]));
+    const evening = await saveWorkout(bench('2026-09-27', [80]));
+    await setCreatedAt(morning, 1_000_000);
+    await setCreatedAt(evening, 2_000_000);
+
+    const session = await getLastSession(benchId, {
+      onOrBefore: '2026-09-27',
+      excludeWorkoutId: evening,
+    });
+
+    expect(session?.workoutId).toBe(morning);
+    expect(session?.date).toBe('2026-09-27');
+    expect(session?.sets[0]!.weightKg).toBeCloseTo(70, 6);
+  });
+
+  it('breaks a same-date, same-created_at tie by workout id, deterministically', async () => {
+    // created_at has one-second resolution, so two workouts saved in the same second are
+    // genuinely indistinguishable by date and created_at. `id DESC` is the final
+    // tiebreak; without it the winner would be whatever the planner happened to emit.
+    const first = await saveWorkout(bench('2026-09-27', [70]));
+    const second = await saveWorkout(bench('2026-09-27', [80]));
+    await setCreatedAt(first, 1_000_000);
+    await setCreatedAt(second, 1_000_000);
+
+    expect(second).toBeGreaterThan(first);
+
+    const session = await getLastSession(benchId, { onOrBefore: '2026-09-27' });
+    expect(session?.workoutId).toBe(second);
+
+    // Stable across calls, not merely correct once.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const repeat = await getLastSession(benchId, { onOrBefore: '2026-09-27' });
+      expect(repeat?.workoutId).toBe(second);
+    }
+  });
+
+  it('falls back past a same-created_at tie when the id winner is being edited', async () => {
+    const first = await saveWorkout(bench('2026-09-27', [70]));
+    const second = await saveWorkout(bench('2026-09-27', [80]));
+    await setCreatedAt(first, 1_000_000);
+    await setCreatedAt(second, 1_000_000);
+
+    const session = await getLastSession(benchId, {
+      onOrBefore: '2026-09-27',
+      excludeWorkoutId: second,
+    });
+
+    expect(session?.workoutId).toBe(first);
+    expect(session?.sets[0]!.weightKg).toBeCloseTo(70, 6);
+  });
+
+  it('recalls the workout before a backdated draft, not the one after it', async () => {
+    // The spec's dates: a draft wedged between two sessions reaches backwards only.
+    await saveWorkout(bench('2026-09-10', [70]));
+    await saveWorkout(bench('2026-09-20', [80]));
+
+    const session = await getLastSession(benchId, { onOrBefore: '2026-09-15' });
+
+    expect(session?.date).toBe('2026-09-10');
+    expect(session?.sets[0]!.weightKg).toBeCloseTo(70, 6);
+  });
+
   it('picks the later of two workouts on the same date', async () => {
     const first = await saveWorkout(bench('2026-09-27', [70]));
     const second = await saveWorkout(bench('2026-09-27', [80]));
 
     // created_at has one-second resolution, so make the ordering unambiguous.
-    await db
-      .update(gymWorkouts)
-      .set({ createdAt: new Date(1_000_000) })
-      .where(eq(gymWorkouts.id, first));
-    await db
-      .update(gymWorkouts)
-      .set({ createdAt: new Date(2_000_000) })
-      .where(eq(gymWorkouts.id, second));
+    await setCreatedAt(first, 1_000_000);
+    await setCreatedAt(second, 2_000_000);
 
     const session = await getLastSession(benchId, { onOrBefore: '2026-10-01' });
     expect(session?.workoutId).toBe(second);
@@ -280,6 +348,55 @@ describe('getLastSessions batches', () => {
       onOrBefore: '2026-10-01',
     });
     expect(sessions.size).toBe(1);
+  });
+
+  it('resolves each exercise independently, including the ones with nothing to recall', async () => {
+    // bench: has history before the cutoff, so it recalls.
+    // row:   its only history is AFTER the cutoff, so it must not.
+    // pullUp: no history at all, so it must not either.
+    await saveWorkout(bench('2026-09-13', [65]));
+    await saveWorkout({
+      date: '2026-09-27',
+      name: 'Pull',
+      notes: null,
+      exercises: [
+        { exerciseId: rowId, sortOrder: 0, sets: [{ weightKg: 60, reps: 10, setOrder: 0 }] },
+      ],
+    });
+
+    const sessions = await getLastSessions([benchId, rowId, pullUpId], {
+      onOrBefore: '2026-09-20',
+    });
+
+    expect(sessions.get(benchId)?.date).toBe('2026-09-13');
+    expect(sessions.get(benchId)?.sets[0]!.weightKg).toBeCloseTo(65, 6);
+    // A later-dated workout is not history yet, so it is an omission and not an entry.
+    expect(sessions.has(rowId)).toBe(false);
+    expect(sessions.has(pullUpId)).toBe(false);
+    expect(sessions.size).toBe(1);
+  });
+
+  it('applies one exclusion across a batch without blanking the other exercises', async () => {
+    // The excluded workout is the newest for BOTH exercises, but bench has an earlier
+    // session to fall back on and row does not.
+    await saveWorkout(bench('2026-09-13', [65]));
+    const editing = await saveWorkout({
+      date: '2026-09-20',
+      name: 'Push',
+      notes: null,
+      exercises: [
+        { exerciseId: benchId, sortOrder: 0, sets: [{ weightKg: 70, reps: 8, setOrder: 0 }] },
+        { exerciseId: rowId, sortOrder: 1, sets: [{ weightKg: 60, reps: 10, setOrder: 0 }] },
+      ],
+    });
+
+    const sessions = await getLastSessions([benchId, rowId], {
+      onOrBefore: '2026-09-20',
+      excludeWorkoutId: editing,
+    });
+
+    expect(sessions.get(benchId)?.date).toBe('2026-09-13');
+    expect(sessions.has(rowId)).toBe(false);
   });
 
   it('does not leak one exercise sets into another', async () => {

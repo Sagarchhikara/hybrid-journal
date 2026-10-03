@@ -167,6 +167,26 @@ describe('createOrGetExercise resolves duplicates instead of erroring', () => {
     expect((await findExerciseByName('Pull-Up'))?.isBodyweight).toBe(true);
   });
 
+  it('restores through a name needing both case and whitespace normalisation', async () => {
+    // '  pull-up ' has to pass normalisation AND the NOCASE collation to find the row at
+    // all; if it missed, this would create a second Pull-Up with the default flag of
+    // false rather than restoring the archived bodyweight one.
+    const pullUp = await findExerciseByName('Pull-Up');
+    const before = (await db.select().from(exercises)).length;
+    await archiveExercise(pullUp!.id);
+
+    const result = await createOrGetExercise({ name: '  pull-up ', muscleGroup: 'back' });
+
+    expect(result.created).toBe(false);
+    expect(result.restored).toBe(true);
+    expect(result.exercise.id).toBe(pullUp!.id);
+    expect(result.exercise.isBodyweight).toBe(true);
+    expect(result.exercise.archivedAt).toBeNull();
+    expect(result.exercise.name).toBe('Pull-Up');
+    // No duplicate row was added on the way.
+    expect((await db.select().from(exercises)).length).toBe(before);
+  });
+
   it('keeps a false stored flag on restore too', async () => {
     expect((await findExerciseByName('Barbell Bench Press'))?.isBodyweight).toBe(false);
     await archiveExercise(benchId);

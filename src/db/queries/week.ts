@@ -21,6 +21,10 @@ export interface WeekSummary {
    * underlying count() is always a number, and zero is mapped to null here purely so this
    * field behaves like totalRunKm and averageSleepMin in the UI. Do not read null as
    * "unknown", and do not do arithmetic on it without collapsing it back to 0.
+   *
+   * Anything that needs real zeros — the Phase 3 charts above all, where a zero week is a
+   * data point and not a gap — must use its own query rather than this one. A chart fed
+   * from here would silently drop every week with no workouts instead of plotting it at 0.
    */
   workoutCount: number | null;
 }
