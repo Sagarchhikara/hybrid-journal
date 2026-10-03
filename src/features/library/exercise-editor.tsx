@@ -28,7 +28,7 @@ export interface ExerciseEditorProps {
  * there is no delete to offer.
  */
 export function ExerciseEditor({ exercise, onClose }: ExerciseEditorProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, borderWidths } = useTheme();
   const [name, setName] = useState(exercise.name);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -153,8 +153,8 @@ export function ExerciseEditor({ exercise, onClose }: ExerciseEditorProps) {
         style={{
           padding: spacing.lg,
           gap: spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopWidth: borderWidths.hairline,
+          borderTopColor: colors.divider,
         }}>
         <Button label="Save name" onPress={save} loading={busy} />
         {archived ? (

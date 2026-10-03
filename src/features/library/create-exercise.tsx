@@ -16,7 +16,7 @@ export interface CreateExerciseProps {
 }
 
 export function CreateExercise({ initialName = '', onCreated, onCancel }: CreateExerciseProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, borderWidths } = useTheme();
   const [name, setName] = useState(initialName);
   const [group, setGroup] = useState<MuscleGroup>('chest');
   const [bodyweight, setBodyweight] = useState(false);
@@ -90,8 +90,8 @@ export function CreateExercise({ initialName = '', onCreated, onCancel }: Create
         style={{
           padding: spacing.lg,
           gap: spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopWidth: borderWidths.hairline,
+          borderTopColor: colors.divider,
         }}>
         {/* createOrGetExercise resolves an existing or archived name rather than failing,
             so this is safe to press with a name that already exists. */}

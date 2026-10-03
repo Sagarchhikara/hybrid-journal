@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, ScrollView, View } from 'react-native';
 
-import { Button, Chip, Icon, Screen, Text, TextField } from '@/components';
+import { Button, Chip, EmptyState, ListRow, Screen, Section, Text, TextField } from '@/components';
 import { useDbQuery } from '@/db';
 import { searchExercises } from '@/db/queries/exercises';
 import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
@@ -19,7 +19,7 @@ import { splitLibrary } from './library-data';
  * the data version, so the list refetches itself after every edit.
  */
 export function ExerciseLibraryScreen() {
-  const { colors, radii, spacing, icons, borderWidths } = useTheme();
+  const { colors, radii, spacing, borderWidths } = useTheme();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [editing, setEditing] = useState<Exercise | null>(null);
@@ -71,19 +71,22 @@ export function ExerciseLibraryScreen() {
         </View>
 
         {empty ? (
-          <View style={{ gap: spacing.md, paddingVertical: spacing.xl, alignItems: 'center' }}>
-            <Icon name="gym" size={icons.empty} color="muted" />
-            <Text color="muted" style={{ textAlign: 'center' }}>
-              {trimmed === '' ? 'Your library is empty.' : `Nothing matches “${trimmed}”.`}
-            </Text>
-            {trimmed === '' ? null : (
-              <Button label={`Create “${trimmed}”`} onPress={() => setCreating(true)} />
-            )}
-          </View>
+          <EmptyState
+            icon="gym"
+            title={trimmed === '' ? 'Your library is empty' : `Nothing matches “${trimmed}”`}
+            body={trimmed === '' ? 'Exercises you create or log will collect here.' : undefined}
+            action={
+              trimmed === '' ? undefined : (
+                <Button label={`Create “${trimmed}”`} onPress={() => setCreating(true)} />
+              )
+            }
+          />
         ) : null}
 
         {active.length > 0 ? (
-          <Section title={`${active.length} ${active.length === 1 ? 'exercise' : 'exercises'}`}>
+          <Section
+            style={{ marginTop: spacing.lg }}
+            title={`${active.length} ${active.length === 1 ? 'exercise' : 'exercises'}`}>
             {active.map((exercise) => (
               <LibraryRow
                 key={exercise.id}
@@ -96,6 +99,7 @@ export function ExerciseLibraryScreen() {
 
         {archived.length > 0 ? (
           <Section
+            style={{ marginTop: spacing.lg }}
             title="Archived"
             hint="Hidden when adding exercises. Their logged sets stay in your history.">
             {archived.map((exercise) => (
@@ -151,63 +155,18 @@ export function ExerciseLibraryScreen() {
   );
 }
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  const { spacing } = useTheme();
-
-  return (
-    <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
-      <Text variant="label" color="muted">
-        {title.toUpperCase()}
-      </Text>
-      {hint ? (
-        <Text variant="caption" color="muted">
-          {hint}
-        </Text>
-      ) : null}
-      {children}
-    </View>
-  );
-}
-
 function LibraryRow({ exercise, onPress }: { exercise: Exercise; onPress: () => void }) {
-  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
-  const archived = exercise.archivedAt !== null;
-
   return (
-    <Pressable
-      accessibilityRole="button"
+    <ListRow
+      title={exercise.name}
+      subtitle={`${MUSCLE_GROUP_LABELS[exercise.muscleGroup]}${
+        exercise.isBodyweight ? ' · bodyweight' : ''
+      }${exercise.isCustom ? ' · yours' : ''}`}
       accessibilityLabel={`Edit ${exercise.name}`}
+      // Archived entries read back at lower weight rather than being hidden here: this
+      // is the screen where you come to find and restore them.
+      dimmed={exercise.archivedAt !== null}
       onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderColor: colors.border,
-        borderWidth: borderWidths.hairline,
-        borderRadius: radii.md,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        minHeight: sizes.row,
-        opacity: archived ? 0.6 : 1,
-      })}>
-      <View style={{ flex: 1 }}>
-        <Text variant="body">{exercise.name}</Text>
-        <Text variant="caption" color="muted">
-          {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
-          {exercise.isBodyweight ? ' · bodyweight' : ''}
-          {exercise.isCustom ? ' · yours' : ''}
-        </Text>
-      </View>
-      <Icon name="chevron" size={icons.sm} color="muted" />
-    </Pressable>
+    />
   );
 }

@@ -1,14 +1,14 @@
 import { useRouter, type Href } from 'expo-router';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert } from 'react-native';
 
-import { Icon, Text, type IconName } from '@/components';
+import { ListRow, type IconName } from '@/components';
 import { deleteWorkout } from '@/db/queries/gym';
 import { deleteRun } from '@/db/queries/runs';
 import { clearDailyMetricField } from '@/db/queries/metrics';
 import { deleteSleep } from '@/db/queries/sleep';
 import type { HistoryEntry } from '@/db/queries/history';
 import type { Settings } from '@/db/queries/settings';
-import { useTheme, type ColorToken } from '@/theme';
+import type { ColorToken } from '@/theme';
 
 import { historyEntryTitle, summarizeHistoryEntry } from './summarize';
 
@@ -55,7 +55,6 @@ export interface HistoryRowProps {
 }
 
 export function HistoryRow({ entry, settings }: HistoryRowProps) {
-  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
   const router = useRouter();
   const { icon, color, href } = presentation(entry);
   const title = historyEntryTitle(entry);
@@ -76,34 +75,18 @@ export function HistoryRow({ entry, settings }: HistoryRowProps) {
   }
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <ListRow
+      // The kind of entry leads, then what it was: scanning History is scanning for
+      // "when did I last run", not for the distance.
+      kicker={title}
+      title={summarizeHistoryEntry(entry, settings)}
+      icon={icon}
+      tint={color}
+      edge
       accessibilityLabel={`${title}. ${summarizeHistoryEntry(entry, settings)}`}
       accessibilityHint="Tap to edit. Long press to delete."
       onPress={() => router.push(href)}
       onLongPress={confirmDelete}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.lg,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderColor: colors.border,
-        borderWidth: borderWidths.hairline,
-        borderLeftColor: colors[color],
-        borderLeftWidth: borderWidths.accent,
-        borderRadius: radii.md,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        minHeight: sizes.row,
-      })}>
-      <Icon name={icon} size={icons.lg} color={color} />
-      <View style={{ flex: 1, gap: spacing.xxs }}>
-        <Text variant="label" color="muted">
-          {title}
-        </Text>
-        <Text variant="body">{summarizeHistoryEntry(entry, settings)}</Text>
-      </View>
-      <Icon name="chevron" size={icons.xs} color="muted" />
-    </Pressable>
+    />
   );
 }

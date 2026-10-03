@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 
-import { Button, Screen, Text } from '@/components';
+import { Button, Card, Screen, Section, Stat, StatRow, Text } from '@/components';
 import { useDbQuery, useSettings } from '@/db';
 import { getWorkoutDetail, type WorkoutDetailExercise } from '@/db/queries/gym';
 import { formatSet } from '@/features/gym/format-sets';
@@ -59,14 +59,20 @@ export function WorkoutDetailScreen({ workoutId }: WorkoutDetailScreenProps) {
 
   return (
     <Screen scroll edgeToEdgeTop={false}>
-      <View style={{ gap: spacing.xs, marginBottom: spacing.xl }}>
-        <Text variant="title">{detail.name ?? 'Workout'}</Text>
-        <Text color="muted">{formatDateKeyLong(detail.date)}</Text>
-        <Text variant="caption" color="muted">
-          {detail.exercises.length} {detail.exercises.length === 1 ? 'exercise' : 'exercises'} ·{' '}
-          {totalSets} {totalSets === 1 ? 'set' : 'sets'}
+      <View style={{ gap: spacing.xxs, marginBottom: spacing.lg }}>
+        <Text variant="label" color="muted">
+          {formatDateKeyLong(detail.date).toUpperCase()}
         </Text>
+        <Text variant="display">{detail.name ?? 'Workout'}</Text>
       </View>
+
+      {/* Counted off the rows already loaded for the list below, not queried again. */}
+      <Card style={{ marginBottom: spacing.xl }}>
+        <StatRow>
+          <Stat label="Exercises" value={String(detail.exercises.length)} tint="gym" />
+          <Stat label="Sets" value={String(totalSets)} tint="gym" />
+        </StatRow>
+      </Card>
 
       {detail.exercises.length === 0 ? (
         <Text color="muted">No exercises were logged in this workout.</Text>
@@ -83,12 +89,11 @@ export function WorkoutDetailScreen({ workoutId }: WorkoutDetailScreenProps) {
       )}
 
       {detail.notes !== null && detail.notes.trim() !== '' ? (
-        <View style={{ marginTop: spacing.xl, gap: spacing.sm }}>
-          <Text variant="label" color="muted">
-            NOTES
-          </Text>
-          <Text>{detail.notes}</Text>
-        </View>
+        <Section title="Notes" style={{ marginTop: spacing.xl }}>
+          <Card>
+            <Text color="textSecondary">{detail.notes}</Text>
+          </Card>
+        </Section>
       ) : null}
 
       <Button
@@ -114,7 +119,9 @@ function ExerciseBlock({ exercise, unit }: { exercise: WorkoutDetailExercise; un
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <View style={{ flex: 1, gap: spacing.xxs }}>
-          <Text variant="heading">{exercise.name}</Text>
+          <Text variant="heading" color="gym">
+            {exercise.name}
+          </Text>
           <Text variant="caption" color="muted">
             {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
             {exercise.isBodyweight ? ' · bodyweight' : ''}
@@ -133,7 +140,7 @@ function ExerciseBlock({ exercise, unit }: { exercise: WorkoutDetailExercise; un
             key={set.id}
             style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Text variant="caption" color="muted" style={{ width: SET_INDEX_WIDTH }}>
-              {index + 1}
+              {set.isDropSet ? '↳' : index + 1}
             </Text>
             <Text variant="body">{formatSet(set, exercise.isBodyweight, unit)}</Text>
           </View>
