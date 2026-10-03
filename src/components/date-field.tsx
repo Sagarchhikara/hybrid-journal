@@ -19,7 +19,7 @@ export interface DateFieldProps {
  * reset beats pulling in a native dependency for Phase 1.
  */
 export function DateField({ value, onChange, maxDate = todayLocal() }: DateFieldProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, borderWidths } = useTheme();
 
   const today = todayLocal();
   const canGoForward = value < maxDate;
@@ -35,11 +35,11 @@ export function DateField({ value, onChange, maxDate = todayLocal() }: DateField
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceRaised,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
-        minHeight: 52,
+        minHeight: sizes.field,
       }}>
       <Step
         direction="back"
@@ -82,7 +82,7 @@ function Step({
   enabled: boolean;
   label: string;
 }) {
-  const { spacing } = useTheme();
+  const { spacing, icons } = useTheme();
 
   return (
     <Pressable
@@ -98,7 +98,7 @@ function Step({
         opacity: enabled ? (pressed ? 0.5 : 1) : 0.25,
         transform: [{ scaleX: direction === 'back' ? -1 : 1 }],
       })}>
-      <Icon name="chevron" size={22} color="muted" />
+      <Icon name="chevron" size={icons.lg} color="muted" />
     </Pressable>
   );
 }

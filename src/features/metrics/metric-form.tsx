@@ -113,7 +113,7 @@ export function MetricForm({
             loading={saving}
           />
           {existing === null ? null : (
-            <Button label="Delete entry" variant="secondary" onPress={confirmDelete} />
+            <Button label="Delete entry" variant="danger" onPress={confirmDelete} />
           )}
         </>
       }>

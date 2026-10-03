@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Chip, Icon, Text } from '@/components';
+import { Button, Chip, EmptyState, Text } from '@/components';
 import { useSettings } from '@/db';
 import { groupByDate, type HistoryEntry, type HistoryFilter } from '@/db/queries/history';
 import { formatDateKeyLong, shiftDateKey, todayLocal } from '@/lib/dates';
@@ -82,7 +82,7 @@ export function HistoryScreen() {
           flexGrow: rows.length === 0 ? 1 : undefined,
         }}
         ListEmptyComponent={
-          loading ? null : error ? <ErrorState message={error.message} /> : <EmptyState />
+          loading ? null : error ? <ErrorState message={error.message} /> : <HistoryEmptyState />
         }
         ListFooterComponent={
           loading || hasMore ? (
@@ -119,30 +119,17 @@ function DateHeader({ date }: { date: string }) {
   );
 }
 
-function EmptyState() {
+function HistoryEmptyState() {
   const router = useRouter();
-  const { spacing } = useTheme();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.md,
-        paddingHorizontal: spacing.xxl,
-      }}>
-      <Icon name="history" size={40} color="muted" />
-      <Text variant="title">Nothing logged yet</Text>
-      <Text color="muted" style={{ textAlign: 'center' }}>
-        Runs, sleep and body measurements will show up here, newest first.
-      </Text>
-      <Button
-        label="Log something"
-        onPress={() => router.push('/log')}
-        style={{ marginTop: spacing.md, alignSelf: 'stretch' }}
-      />
-    </View>
+    <EmptyState
+      fill
+      icon="history"
+      title="Nothing logged yet"
+      body="Workouts, runs, sleep and body measurements will show up here, newest first."
+      action={<Button label="Log something" onPress={() => router.push('/log')} />}
+    />
   );
 }
 

@@ -1,0 +1,72 @@
+import { Children, type ReactNode } from 'react';
+import { View, type ViewStyle } from 'react-native';
+
+import { useTheme, type ColorToken } from '@/theme';
+
+import { Text } from './text';
+
+export interface StatProps {
+  /** Small caps under the number. */
+  label: string;
+  value: string;
+  /** Colours the number. Defaults to plain text. */
+  tint?: ColorToken;
+  /**
+   * `large` is for a stat that is the point of the card. `small` is for a strip that has
+   * to stay out of the way — it halves the height, which on a short screen with the
+   * keyboard up is the difference between seeing a set row and not.
+   */
+  size?: 'small' | 'medium' | 'large';
+  /** Greys the number out — for a dash standing in for "nothing logged". */
+  muted?: boolean;
+  style?: ViewStyle;
+}
+
+/**
+ * A number with its label under it.
+ *
+ * The number is set in the `stat` type: tight tracking, heavy weight, so it reads as one
+ * shape at arm's length. The label stays small and quiet — on a summary card you are
+ * looking for the figure, and the word is only there to tell you which figure it is.
+ */
+const SIZES = { small: 'heading', medium: 'stat', large: 'statLarge' } as const;
+
+export function Stat({ label, value, tint = 'text', size = 'medium', muted, style }: StatProps) {
+  const { spacing } = useTheme();
+
+  return (
+    <View style={[{ gap: spacing.xxs }, style]}>
+      <Text
+        variant={SIZES[size]}
+        color={muted ? 'muted' : tint}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}>
+        {value}
+      </Text>
+      {/* Wraps rather than truncating: at a large system font scale a label like
+          "Avg sleep" outgrows its column, and an ellipsis there tells you nothing. */}
+      <Text variant="label" color="muted" numberOfLines={2}>
+        {label.toUpperCase()}
+      </Text>
+    </View>
+  );
+}
+
+export interface StatRowProps {
+  children: ReactNode;
+  style?: ViewStyle;
+}
+
+/** Stats side by side, each taking an equal share of the width. */
+export function StatRow({ children, style }: StatRowProps) {
+  const { spacing } = useTheme();
+
+  return (
+    <View style={[{ flexDirection: 'row', gap: spacing.lg }, style]}>
+      {Children.map(children, (child) => (
+        <View style={{ flex: 1, minWidth: 0 }}>{child}</View>
+      ))}
+    </View>
+  );
+}

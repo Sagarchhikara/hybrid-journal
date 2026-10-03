@@ -1,13 +1,15 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
-import { Button, Card, Screen, Text } from '@/components';
+import { Button, Card, ListRow, Screen, Section, Stat, StatRow, Text } from '@/components';
 import { clearAllData, seedDevData, useLogCounts } from '@/db';
 import { UnitsSection } from '@/features/settings';
 import { useTheme } from '@/theme';
 
 export default function YouScreen() {
   const { spacing } = useTheme();
+  const router = useRouter();
 
   return (
     <Screen scroll>
@@ -17,7 +19,17 @@ export default function YouScreen() {
 
       <UnitsSection />
 
-      <Text color="muted" style={{ marginTop: spacing.xxl }}>
+      <Section title="Library" style={{ marginTop: spacing.xxl }}>
+        <ListRow
+          title="Exercise library"
+          subtitle="Search, rename, archive and restore"
+          icon="gym"
+          tint="gym"
+          onPress={() => router.push('/library')}
+        />
+      </Section>
+
+      <Text variant="caption" color="muted" style={{ marginTop: spacing.xxl }}>
         Reminders and data export will live here.
       </Text>
 
@@ -56,34 +68,41 @@ function DevTools() {
   }
 
   return (
-    <View style={{ marginTop: spacing.xxl, gap: spacing.md }}>
-      <Text variant="heading">Developer</Text>
-
-      <Card>
-        <Text color="muted">
-          {counts.workouts} workouts · {counts.runs} runs · {counts.sleepEntries} sleep ·{' '}
-          {counts.exercises} exercises
-        </Text>
+    <Section title="Developer" style={{ marginTop: spacing.xxl }}>
+      {/* Two by two, not four across: four columns on a 360dp screen leaves about
+          62dp each, which is narrower than the word "Workouts". */}
+      <Card style={{ gap: spacing.lg }}>
+        <StatRow>
+          <Stat label="Workouts" value={String(counts.workouts)} tint="gym" />
+          <Stat label="Runs" value={String(counts.runs)} tint="run" />
+        </StatRow>
+        <StatRow>
+          <Stat label="Nights" value={String(counts.sleepEntries)} tint="sleep" />
+          <Stat label="Lifts" value={String(counts.exercises)} />
+        </StatRow>
       </Card>
 
-      <Button
-        label="Seed 3 weeks of sample data"
-        onPress={() => void run('seed')}
-        loading={busy === 'seed'}
-        disabled={busy !== null}
-      />
-      <Button
-        label="Clear all data"
-        variant="danger"
-        onPress={() =>
-          Alert.alert('Clear all data?', 'This removes every logged workout, run and night.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Clear', style: 'destructive', onPress: () => void run('clear') },
-          ])
-        }
-        loading={busy === 'clear'}
-        disabled={busy !== null}
-      />
-    </View>
+      <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+        <Button
+          label="Seed 3 weeks of sample data"
+          variant="secondary"
+          onPress={() => void run('seed')}
+          loading={busy === 'seed'}
+          disabled={busy !== null}
+        />
+        <Button
+          label="Clear all data"
+          variant="danger"
+          onPress={() =>
+            Alert.alert('Clear all data?', 'This removes every logged workout, run and night.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Clear', style: 'destructive', onPress: () => void run('clear') },
+            ])
+          }
+          loading={busy === 'clear'}
+          disabled={busy !== null}
+        />
+      </View>
+    </Section>
   );
 }

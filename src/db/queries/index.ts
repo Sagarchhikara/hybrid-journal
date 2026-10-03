@@ -28,3 +28,50 @@ export {
   type Settings,
 } from './settings';
 export { getWeekSummary, type WeekSummary } from './week';
+export {
+  countWorkoutsBetween,
+  deleteWorkout,
+  getLastWorkoutByName,
+  getWorkoutDetail,
+  replaceWorkout,
+  runInTransaction,
+  saveWorkout,
+  type ExerciseInput,
+  type SetInput,
+  type WorkoutDetail,
+  type WorkoutDetailExercise,
+  type WorkoutDetailSet,
+  type WorkoutInput,
+} from './gym';
+export {
+  explainLastSessionPlan,
+  getLastSession,
+  getLastSessions,
+  type LastSession,
+  type LastSessionOptions,
+  type LastSessionSet,
+} from './last-session';
+export {
+  archiveExercise,
+  countExerciseUsage,
+  createOrGetExercise,
+  findExerciseByName,
+  getExercise,
+  getRecentExerciseIds,
+  renameExercise,
+  restoreExercise,
+  searchExercises,
+  setExerciseBodyweight,
+  setExerciseMuscleGroup,
+  type CreateExerciseInput,
+  type CreateExerciseResult,
+  type ExerciseSearch,
+  type RenameResult,
+} from './exercises';
+export {
+  clearGymDraft,
+  GYM_DRAFT_KEY,
+  hasGymDraft,
+  readGymDraft,
+  writeGymDraft,
+} from './gym-draft';

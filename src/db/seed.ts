@@ -32,8 +32,9 @@ export async function seedExerciseLibrary(): Promise<number> {
     .insert(exercises)
     .values(
       STARTER_EXERCISES.map((exercise) => ({
-        ...exercise,
         name: normalizeExerciseName(exercise.name),
+        muscleGroup: exercise.muscleGroup,
+        isBodyweight: exercise.isBodyweight ?? false,
         isCustom: false,
         archivedAt: null,
       })),

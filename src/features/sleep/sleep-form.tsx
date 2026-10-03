@@ -2,7 +2,17 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 
-import { Button, Chip, DateField, Field, FormScreen, NumberField, Text } from '@/components';
+import {
+  Button,
+  Card,
+  Chip,
+  DateField,
+  Field,
+  FormScreen,
+  NumberField,
+  Stat,
+  Text,
+} from '@/components';
 import { deleteSleep, getSleepForDate, upsertSleep } from '@/db';
 import { todayLocal, type DateKey } from '@/lib/dates';
 import { formatHoursMinutes } from '@/lib/duration';
@@ -99,7 +109,7 @@ export function SleepForm({ date: initialDate }: SleepFormProps) {
             loading={saving}
           />
           {existing === null ? null : (
-            <Button label="Delete entry" variant="secondary" onPress={confirmDelete} />
+            <Button label="Delete entry" variant="danger" onPress={confirmDelete} />
           )}
         </>
       }>
@@ -138,9 +148,17 @@ export function SleepForm({ date: initialDate }: SleepFormProps) {
         </View>
       </Field>
 
-      <Text variant="title" color={partialMin > 0 ? 'sleep' : 'muted'}>
-        {partialMin > 0 ? formatHoursMinutes(partialMin) : '—'}
-      </Text>
+      {/* The running total of what is typed above, large enough to check at a glance
+          before saving. */}
+      <Card>
+        <Stat
+          label="Time asleep"
+          value={partialMin > 0 ? formatHoursMinutes(partialMin) : '—'}
+          tint="sleep"
+          size="large"
+          muted={partialMin === 0}
+        />
+      </Card>
 
       {existing === null ? null : (
         <Text variant="caption" color="muted">

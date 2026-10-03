@@ -11,20 +11,14 @@ export interface CardProps {
 }
 
 export function Card({ children, accent, style }: CardProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing, card, borderWidths } = useTheme();
 
   return (
     <View
       style={[
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderWidth: 1,
-          borderRadius: radii.lg,
-          padding: spacing.lg,
-          gap: spacing.sm,
-        },
-        accent && { borderLeftColor: colors[accent], borderLeftWidth: 3 },
+        card,
+        { gap: spacing.sm },
+        accent && { borderLeftColor: colors[accent], borderLeftWidth: borderWidths.accent },
         style,
       ]}>
       {children}

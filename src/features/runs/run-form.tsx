@@ -1,14 +1,17 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert } from 'react-native';
 
 import {
   Button,
+  Card,
   DateField,
   Field,
   FormScreen,
   NumberField,
   SegmentedControl,
+  Stat,
+  StatRow,
   Text,
   TextField,
 } from '@/components';
@@ -18,13 +21,15 @@ import { todayLocal, type DateKey } from '@/lib/dates';
 import { formatDuration, secondsToHms } from '@/lib/duration';
 import { formatPace } from '@/lib/pace';
 import { fromStoredDistanceKm } from '@/lib/units';
-import { useTheme } from '@/theme';
 
 import { DurationInput } from './duration-input';
 import { RUN_TYPE_OPTIONS } from './run-type-options';
 import { validateRun, type RunDraft } from './validate';
 
 const BLANK: RunDraft = { distance: '', hours: '', minutes: '', seconds: '' };
+
+/** Not yet computable reads as a dash, not a zero. */
+const DASH = '—';
 
 export interface RunFormProps {
   /** Omitted when logging a new run; present when editing an existing one. */
@@ -33,7 +38,6 @@ export interface RunFormProps {
 
 export function RunForm({ runId }: RunFormProps) {
   const router = useRouter();
-  const { colors, spacing } = useTheme();
   const { settings, loading: settingsLoading } = useSettings();
 
   const [date, setDate] = useState<DateKey>(todayLocal());
@@ -152,7 +156,7 @@ export function RunForm({ runId }: RunFormProps) {
             loading={saving}
           />
           {runId === undefined ? null : (
-            <Button label="Delete run" variant="secondary" onPress={confirmDelete} />
+            <Button label="Delete run" variant="danger" onPress={confirmDelete} />
           )}
         </>
       }>
@@ -183,20 +187,19 @@ export function RunForm({ runId }: RunFormProps) {
         />
       </Field>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          backgroundColor: colors.surface,
-          borderRadius: spacing.md,
-          padding: spacing.lg,
-        }}>
-        <Labelled label="Pace" value={pace ?? '—'} />
-        <Labelled
-          label="Time"
-          value={partial.durationSec > 0 ? formatDuration(partial.durationSec) : '—'}
-        />
-      </View>
+      {/* Derived from what is typed above, so it updates as you type rather than on
+          save. Both read as dashes until there is enough to compute them. */}
+      <Card>
+        <StatRow>
+          <Stat label="Pace" value={pace ?? DASH} tint="run" muted={pace === null} />
+          <Stat
+            label="Time"
+            value={partial.durationSec > 0 ? formatDuration(partial.durationSec) : DASH}
+            tint="run"
+            muted={partial.durationSec === 0}
+          />
+        </StatRow>
+      </Card>
 
       <Field label="Type">
         <SegmentedControl options={RUN_TYPE_OPTIONS} value={type} onChange={setType} />
@@ -212,16 +215,5 @@ export function RunForm({ runId }: RunFormProps) {
         />
       </Field>
     </FormScreen>
-  );
-}
-
-function Labelled({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ gap: 2 }}>
-      <Text variant="caption" color="muted">
-        {label.toUpperCase()}
-      </Text>
-      <Text variant="title">{value}</Text>
-    </View>
   );
 }

@@ -24,6 +24,12 @@ export function applyMigrations(): void {
   }
 }
 
+/**
+ * Order matters: children before parents, so the RESTRICT foreign key from
+ * workout_exercises to exercises does not block the final delete. `exercises` is included
+ * because Phase 2 tests rename, archive and create library rows, and leaking that state
+ * between tests makes failures depend on execution order.
+ */
 export function resetTables(): void {
   for (const table of [
     'exercise_sets',
@@ -33,6 +39,7 @@ export function resetTables(): void {
     'sleep_entries',
     'daily_metrics',
     'app_settings',
+    'exercises',
   ]) {
     sqliteDb.execSync(`DELETE FROM ${table};`);
   }

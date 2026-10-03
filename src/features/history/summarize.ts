@@ -12,6 +12,15 @@ import { formatDistanceCompact, formatSteps, formatWeight } from '@/lib/units';
  */
 export function summarizeHistoryEntry(entry: HistoryEntry, settings: Settings): string {
   switch (entry.kind) {
+    case 'gym': {
+      const { name, exerciseCount, setCount } = entry.workout;
+      const parts = [
+        plural(exerciseCount, 'exercise', 'exercises'),
+        plural(setCount, 'set', 'sets'),
+      ];
+      if (name !== null && name.trim() !== '') parts.unshift(name);
+      return parts.join(' · ');
+    }
     case 'run': {
       const { distanceKm, durationSec, type } = entry.run;
       const parts = [
@@ -34,6 +43,8 @@ export function summarizeHistoryEntry(entry: HistoryEntry, settings: Settings): 
 
 export function historyEntryTitle(entry: HistoryEntry): string {
   switch (entry.kind) {
+    case 'gym':
+      return 'Gym';
     case 'run':
       return 'Run';
     case 'sleep':
@@ -43,6 +54,10 @@ export function historyEntryTitle(entry: HistoryEntry): string {
     case 'weight':
       return 'Weight';
   }
+}
+
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
 }
 
 function runTypeLabel(type: RunType): string {

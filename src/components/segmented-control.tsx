@@ -21,7 +21,7 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
 }: SegmentedControlProps<T>) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, borderWidths } = useTheme();
 
   return (
     <View
@@ -29,10 +29,10 @@ export function SegmentedControl<T extends string>({
         flexDirection: 'row',
         backgroundColor: colors.surface,
         borderColor: colors.border,
-        borderWidth: 1,
+        borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
-        padding: 3,
-        gap: 3,
+        padding: spacing.xxs,
+        gap: spacing.xxs,
       }}>
       {options.map((option) => {
         const selected = option.value === value;
@@ -46,13 +46,18 @@ export function SegmentedControl<T extends string>({
               flex: 1,
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: 42,
+              minHeight: sizes.tapTarget,
               paddingHorizontal: spacing.xs,
               borderRadius: radii.sm,
               backgroundColor: selected ? colors.accent : 'transparent',
               opacity: pressed && !selected ? 0.6 : 1,
             })}>
-            <Text variant="label" color={selected ? 'accentText' : 'muted'} numberOfLines={1}>
+            {/* Heavier as well as lime: the fill alone would be the only thing marking
+                the choice, and these sit three to a row at 13pt. */}
+            <Text
+              variant={selected ? 'labelStrong' : 'label'}
+              color={selected ? 'accentText' : 'muted'}
+              numberOfLines={1}>
               {option.label}
             </Text>
           </Pressable>

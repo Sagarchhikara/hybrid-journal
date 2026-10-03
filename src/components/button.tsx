@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, type ViewStyle } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorToken } from '@/theme';
 
 import { Text } from './text';
 
@@ -15,6 +15,23 @@ export interface ButtonProps {
   style?: ViewStyle;
 }
 
+/**
+ * Three weights of intent, told apart by fill as well as colour.
+ *
+ * Primary is the only solid lime in a screen, so there is never a question about which
+ * button is the one you came for. Destructive is a dark red wash with a red label rather
+ * than a solid red block: a solid red button is as loud as a primary one, and "discard"
+ * sitting next to "finish" at equal volume is how work gets thrown away by accident.
+ */
+const VARIANTS: Record<
+  ButtonVariant,
+  { background: ColorToken | 'transparent'; label: ColorToken; border: ColorToken | null }
+> = {
+  primary: { background: 'accent', label: 'accentText', border: null },
+  secondary: { background: 'surfaceRaised', label: 'text', border: 'border' },
+  danger: { background: 'dangerSurface', label: 'danger', border: 'danger' },
+};
+
 export function Button({
   label,
   onPress,
@@ -23,12 +40,9 @@ export function Button({
   loading = false,
   style,
 }: ButtonProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, sizes, borderWidths } = useTheme();
   const isInert = disabled || loading;
-
-  const background =
-    variant === 'primary' ? colors.accent : variant === 'danger' ? colors.danger : colors.surface;
-  const labelColor = variant === 'secondary' ? 'text' : 'accentText';
+  const { background, label: labelColor, border } = VARIANTS[variant];
 
   return (
     <Pressable
@@ -38,16 +52,16 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         {
-          backgroundColor: background,
+          backgroundColor: background === 'transparent' ? 'transparent' : colors[background],
           borderRadius: radii.md,
           paddingVertical: spacing.md,
           paddingHorizontal: spacing.lg,
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 48,
-          borderWidth: variant === 'secondary' ? 1 : 0,
-          borderColor: colors.border,
-          opacity: isInert ? 0.5 : pressed ? 0.8 : 1,
+          minHeight: sizes.control,
+          borderWidth: border === null ? 0 : borderWidths.hairline,
+          borderColor: border === null ? undefined : colors[border],
+          opacity: isInert ? 0.4 : pressed ? 0.75 : 1,
         },
         style,
       ]}>

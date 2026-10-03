@@ -63,6 +63,12 @@ export const exercises = sqliteTable(
     muscleGroup: text('muscle_group').$type<MuscleGroup>().notNull(),
     isCustom: integer('is_custom', { mode: 'boolean' }).notNull().default(false),
     /**
+     * True for movements loaded by your own body: pull-ups, dips, push-ups, planks.
+     * It decides how a set's `weight_kg` is READ (see exercise_sets below), so it cannot
+     * be inferred from the sets themselves.
+     */
+    isBodyweight: integer('is_bodyweight', { mode: 'boolean' }).notNull().default(false),
+    /**
      * Set instead of deleting. `workout_exercises.exercise_id` is ON DELETE RESTRICT,
      * so history pins a lift in place forever — archiving is how a lift leaves the
      * picker without erasing the workouts that used it.
@@ -101,7 +107,15 @@ export const workoutExercises = sqliteTable(
       .references(() => exercises.id, { onDelete: 'restrict' }),
     sortOrder: integer('sort_order').notNull(),
   },
-  (t) => [index('workout_exercises_workout_idx').on(t.workoutId, t.sortOrder)],
+  (t) => [
+    index('workout_exercises_workout_idx').on(t.workoutId, t.sortOrder),
+    /**
+     * Last-session recall looks up every row for one exercise across all workouts.
+     * Without this the planner reports `SCAN we` over every set ever logged; with it,
+     * `SEARCH we USING COVERING INDEX`. Pinned by an EXPLAIN QUERY PLAN test.
+     */
+    index('workout_exercises_exercise_idx').on(t.exerciseId, t.workoutId),
+  ],
 );
 
 export const exerciseSets = sqliteTable(
@@ -111,10 +125,33 @@ export const exerciseSets = sqliteTable(
     workoutExerciseId: integer('workout_exercise_id')
       .notNull()
       .references(() => workoutExercises.id, { onDelete: 'cascade' }),
-    /** Null for bodyweight work. */
+    /**
+     * Load in kg, or NULL.
+     *
+     * The reading depends on `exercises.is_bodyweight`:
+     *  - bodyweight exercise, NULL      -> plain bodyweight, shown as 'BW'
+     *  - bodyweight exercise, positive  -> ADDED load on top of bodyweight, 'BW +10 kg'
+     *  - other exercise, positive       -> the total load lifted, '100 kg'
+     *
+     * Never negative and never zero: zero added load is plain bodyweight, so it is
+     * stored as NULL. Non-bodyweight exercises always carry a weight.
+     */
     weightKg: real('weight_kg'),
     reps: integer('reps').notNull(),
     setOrder: integer('set_order').notNull(),
+    /**
+     * True for a drop set: the same exercise continued immediately at a lighter load,
+     * rather than a fresh working set after a rest.
+     *
+     * Kept as a flag on the set instead of a separate table because a drop is still one
+     * set of one exercise — it only differs in how it should be read. Without the flag a
+     * drop is indistinguishable in history from a working set where you simply got
+     * tired, which is the whole reason for recording it.
+     *
+     * Ordering carries the rest of the meaning: a drop belongs to the nearest preceding
+     * non-drop set in `set_order`.
+     */
+    isDropSet: integer('is_drop_set', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('exercise_sets_workout_exercise_idx').on(t.workoutExerciseId, t.setOrder)],
 );

@@ -19,7 +19,8 @@ export default function LogLayout() {
       }}>
       {/* The modal's root screen has no back button, so it needs an explicit way out. */}
       <Stack.Screen name="index" options={{ title: 'Log', headerLeft: () => <CloseButton /> }} />
-      <Stack.Screen name="gym" options={{ title: 'Gym' }} />
+      <Stack.Screen name="gym/index" options={{ title: 'Gym workout' }} />
+      <Stack.Screen name="gym/session" options={{ title: 'Logging' }} />
       <Stack.Screen name="run" options={{ title: 'Log a run' }} />
       <Stack.Screen name="sleep" options={{ title: 'Sleep' }} />
       <Stack.Screen name="steps" options={{ title: 'Steps' }} />

@@ -19,7 +19,7 @@ export function Field({ label, children, error, hint }: FieldProps) {
 
   return (
     <View style={{ gap: spacing.sm }}>
-      <Text variant="label" color="muted">
+      <Text variant="label" color="textSecondary">
         {label.toUpperCase()}
       </Text>
       {children}

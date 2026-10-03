@@ -1,9 +1,18 @@
-import { and, gte, isNotNull, lte, min, or } from 'drizzle-orm';
+import { and, eq, gte, isNotNull, lte, min, or, sql } from 'drizzle-orm';
 
 import { shiftDateKey, todayLocal, type DateKey } from '@/lib/dates';
+import { toNumber } from '@/lib/numbers';
 
 import { db } from '../client';
-import { dailyMetrics, runs, sleepEntries, type Run } from '../schema';
+import {
+  dailyMetrics,
+  exerciseSets,
+  gymWorkouts,
+  runs,
+  sleepEntries,
+  workoutExercises,
+  type Run,
+} from '../schema';
 
 /**
  * One row in the history list. A discriminated union rather than a stringly-typed blob,
@@ -16,7 +25,16 @@ interface HistoryEntryBase {
   loggedAt: number;
 }
 
+/** Enough to render a gym row without loading every set. */
+export interface GymWorkoutSummary {
+  workoutId: number;
+  name: string | null;
+  exerciseCount: number;
+  setCount: number;
+}
+
 export type HistoryEntry =
+  | ({ kind: 'gym'; workout: GymWorkoutSummary } & HistoryEntryBase)
   | ({ kind: 'run'; run: Run } & HistoryEntryBase)
   | ({ kind: 'sleep'; durationMin: number } & HistoryEntryBase)
   | ({ kind: 'steps'; steps: number } & HistoryEntryBase)
@@ -29,14 +47,21 @@ export type HistoryKind = HistoryEntry['kind'];
  * whichever kind happens to carry a larger timestamp: training comes before body
  * measurements, which have no meaningful time of day.
  */
-const KIND_RANK: Record<HistoryKind, number> = { run: 3, sleep: 2, steps: 1, weight: 0 };
+const KIND_RANK: Record<HistoryKind, number> = {
+  gym: 4,
+  run: 3,
+  sleep: 2,
+  steps: 1,
+  weight: 0,
+};
 
-export const HISTORY_FILTERS = ['all', 'runs', 'sleep', 'body'] as const;
+export const HISTORY_FILTERS = ['all', 'gym', 'runs', 'sleep', 'body'] as const;
 export type HistoryFilter = (typeof HISTORY_FILTERS)[number];
 
 /** Which entry kinds each filter chip admits. */
 const FILTER_KINDS: Record<HistoryFilter, readonly HistoryKind[]> = {
-  all: ['run', 'sleep', 'steps', 'weight'],
+  all: ['gym', 'run', 'sleep', 'steps', 'weight'],
+  gym: ['gym'],
   runs: ['run'],
   sleep: ['sleep'],
   body: ['steps', 'weight'],
@@ -54,6 +79,44 @@ interface HistorySource {
 }
 
 const SOURCES: HistorySource[] = [
+  {
+    kinds: ['gym'],
+    load: async (from, to) => {
+      // Counts are aggregated in SQL so a page of history never loads the sets
+      // themselves; the editor fetches those when a row is opened.
+      const rows = await db
+        .select({
+          id: gymWorkouts.id,
+          date: gymWorkouts.date,
+          name: gymWorkouts.name,
+          createdAt: gymWorkouts.createdAt,
+          exerciseCount: sql<number>`count(distinct ${workoutExercises.id})`,
+          setCount: sql<number>`count(${exerciseSets.id})`,
+        })
+        .from(gymWorkouts)
+        .leftJoin(workoutExercises, eq(workoutExercises.workoutId, gymWorkouts.id))
+        .leftJoin(exerciseSets, eq(exerciseSets.workoutExerciseId, workoutExercises.id))
+        .where(and(gte(gymWorkouts.date, from), lte(gymWorkouts.date, to)))
+        .groupBy(gymWorkouts.id);
+
+      return rows.map((row) => ({
+        kind: 'gym' as const,
+        id: `gym-${row.id}`,
+        date: row.date,
+        loggedAt: row.createdAt.getTime(),
+        workout: {
+          workoutId: row.id,
+          name: row.name,
+          exerciseCount: toNumber(row.exerciseCount),
+          setCount: toNumber(row.setCount),
+        },
+      }));
+    },
+    earliest: async () => {
+      const [row] = await db.select({ value: min(gymWorkouts.date) }).from(gymWorkouts);
+      return row?.value ?? null;
+    },
+  },
   {
     kinds: ['run'],
     load: async (from, to) => {

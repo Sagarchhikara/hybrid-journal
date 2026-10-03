@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Icon, Screen, Text, type IconName } from '@/components';
+import { ListRow, Screen, Text, type IconName } from '@/components';
 import { useTheme, type ColorToken } from '@/theme';
 
 const OPTIONS: { route: Href; label: string; hint: string; icon: IconName; color: ColorToken }[] = [
@@ -14,49 +14,27 @@ const OPTIONS: { route: Href; label: string; hint: string; icon: IconName; color
 
 export default function LogPickerScreen() {
   const { spacing } = useTheme();
+  const router = useRouter();
 
   return (
     <Screen scroll edgeToEdgeTop={false}>
-      <Text color="muted" style={{ marginBottom: spacing.lg }}>
+      <Text variant="title" style={{ marginBottom: spacing.lg }}>
         What do you want to log?
       </Text>
       <View style={{ gap: spacing.sm }}>
         {OPTIONS.map((option) => (
-          <LogOption key={option.label} {...option} />
+          <ListRow
+            key={option.label}
+            title={option.label}
+            subtitle={option.hint}
+            icon={option.icon}
+            tint={option.color}
+            edge
+            accessibilityLabel={`Log ${option.label}`}
+            onPress={() => router.push(option.route)}
+          />
         ))}
       </View>
     </Screen>
-  );
-}
-
-function LogOption({ route, label, hint, icon, color }: (typeof OPTIONS)[number]) {
-  const { colors, radii, spacing } = useTheme();
-  const router = useRouter();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Log ${label}`}
-      onPress={() => router.push(route)}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.lg,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderColor: colors.border,
-        borderWidth: 1,
-        borderRadius: radii.lg,
-        padding: spacing.lg,
-        minHeight: 64,
-      })}>
-      <Icon name={icon} size={26} color={color} />
-      <View style={{ flex: 1 }}>
-        <Text variant="heading">{label}</Text>
-        <Text variant="caption" color="muted">
-          {hint}
-        </Text>
-      </View>
-      <Icon name="chevron" size={18} color="muted" />
-    </Pressable>
   );
 }

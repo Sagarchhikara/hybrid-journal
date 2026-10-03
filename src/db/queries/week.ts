@@ -5,7 +5,7 @@ import { toNumber, toNumberOrNull } from '@/lib/numbers';
 import { currentWeekRange, type WeekRange } from '@/lib/week';
 
 import { db } from '../client';
-import { runs, sleepEntries } from '../schema';
+import { gymWorkouts, runs, sleepEntries } from '../schema';
 
 export interface WeekSummary {
   range: WeekRange;
@@ -15,6 +15,18 @@ export interface WeekSummary {
   /** Mean over the days that actually have a sleep entry, not over seven. */
   averageSleepMin: number | null;
   sleepDaysLogged: number;
+  /**
+   * DISPLAY SEMANTICS ONLY: null means "nothing logged this week", so the card can show a
+   * dash instead of a zero. It is not an absence of data in the database sense — the
+   * underlying count() is always a number, and zero is mapped to null here purely so this
+   * field behaves like totalRunKm and averageSleepMin in the UI. Do not read null as
+   * "unknown", and do not do arithmetic on it without collapsing it back to 0.
+   *
+   * Anything that needs real zeros — the Phase 3 charts above all, where a zero week is a
+   * data point and not a gap — must use its own query rather than this one. A chart fed
+   * from here would silently drop every week with no workouts instead of plotting it at 0.
+   */
+  workoutCount: number | null;
 }
 
 /**
@@ -30,6 +42,11 @@ export async function getWeekSummary(today: DateKey = todayLocal()): Promise<Wee
     .from(runs)
     .where(and(gte(runs.date, range.start), lte(runs.date, range.end)));
 
+  const [workoutRow] = await db
+    .select({ entries: count() })
+    .from(gymWorkouts)
+    .where(and(gte(gymWorkouts.date, range.start), lte(gymWorkouts.date, range.end)));
+
   const [sleepRow] = await db
     .select({ mean: avg(sleepEntries.durationMin), days: count() })
     .from(sleepEntries)
@@ -39,6 +56,7 @@ export async function getWeekSummary(today: DateKey = todayLocal()): Promise<Wee
   // `string | null`, while count() is already a number.
   const runCount = toNumber(runRow?.entries);
   const sleepDaysLogged = toNumber(sleepRow?.days);
+  const workouts = toNumber(workoutRow?.entries);
 
   return {
     range,
@@ -46,5 +64,9 @@ export async function getWeekSummary(today: DateKey = todayLocal()): Promise<Wee
     runCount,
     averageSleepMin: toNumberOrNull(sleepRow?.mean),
     sleepDaysLogged,
+    // count() is never null, so "none logged" is mapped to null deliberately to match the
+    // dash semantics the other fields get for free. See the field comment: this is a
+    // presentation choice, not a statement about the data.
+    workoutCount: workouts > 0 ? workouts : null,
   };
 }

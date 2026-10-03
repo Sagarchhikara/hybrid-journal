@@ -6,8 +6,19 @@ import { useTheme } from '@/theme';
 
 export interface FormScreenProps {
   children: ReactNode;
+  /**
+   * Pinned above the scroll area — a summary strip that should stay readable while the
+   * form scrolls under it.
+   */
+  header?: ReactNode;
   /** Pinned below the scroll area and above the keyboard — usually the save button. */
   footer?: ReactNode;
+  /**
+   * iOS only: lets the scroll view inset itself for the keyboard, which keeps a focused
+   * input near the bottom of a long form visible. Off by default so the Phase 1 forms,
+   * which are short enough not to need it, keep their existing behaviour.
+   */
+  adjustKeyboardInsets?: boolean;
 }
 
 /**
@@ -15,19 +26,38 @@ export interface FormScreenProps {
  * small screen, which is the difference between logging a run in 20 seconds and
  * scrolling around hunting for Save.
  */
-export function FormScreen({ children, footer }: FormScreenProps) {
-  const { colors, spacing } = useTheme();
+export function FormScreen({
+  children,
+  header,
+  footer,
+  adjustKeyboardInsets = false,
+}: FormScreenProps) {
+  const { colors, spacing, borderWidths } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
     <KeyboardAvoidingView
       style={[styles.fill, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {header ? (
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingVertical: spacing.md,
+            borderBottomWidth: borderWidths.hairline,
+            borderBottomColor: colors.divider,
+            backgroundColor: colors.background,
+          }}>
+          {header}
+        </View>
+      ) : null}
+
       <ScrollView
         style={styles.fill}
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl }}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive">
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={adjustKeyboardInsets}>
         {children}
       </ScrollView>
 
@@ -36,7 +66,7 @@ export function FormScreen({ children, footer }: FormScreenProps) {
           style={{
             padding: spacing.lg,
             paddingBottom: Math.max(insets.bottom, spacing.lg),
-            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopWidth: borderWidths.hairline,
             borderTopColor: colors.border,
             backgroundColor: colors.background,
             gap: spacing.sm,
