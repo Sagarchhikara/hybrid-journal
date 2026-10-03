@@ -6,24 +6,11 @@ import { useDbQuery } from '@/db';
 import { createOrGetExercise, getRecentExerciseIds, searchExercises } from '@/db/queries/exercises';
 import { normalizeExerciseName } from '@/db/exercise-library';
 import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
+import { MUSCLE_GROUP_LABELS } from '@/lib/muscle-groups';
 import { useTheme } from '@/theme';
 
 import type { NewExerciseInput } from './draft';
 import { muscleGroupsForWorkout } from './workout-names';
-
-const GROUP_LABELS: Record<MuscleGroup, string> = {
-  chest: 'Chest',
-  back: 'Back',
-  shoulders: 'Shoulders',
-  quads: 'Quads',
-  hamstrings: 'Hamstrings',
-  glutes: 'Glutes',
-  calves: 'Calves',
-  biceps: 'Biceps',
-  triceps: 'Triceps',
-  core: 'Core',
-  full_body: 'Full body',
-};
 
 export interface ExercisePickerProps {
   onPick: (exercise: NewExerciseInput) => void;
@@ -98,7 +85,9 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
     effectiveScope.kind === 'group' ? effectiveScope.group : (dayGroups?.[0] ?? 'chest');
 
   const filterLabel =
-    effectiveScope.kind === 'group' ? GROUP_LABELS[effectiveScope.group].toLowerCase() : dayName;
+    effectiveScope.kind === 'group'
+      ? MUSCLE_GROUP_LABELS[effectiveScope.group].toLowerCase()
+      : dayName;
 
   const normalized = normalizeExerciseName(trimmed);
   const hasExactMatch = (matches ?? []).some(
@@ -158,7 +147,7 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
             {orderedGroups.map((value) => (
               <Chip
                 key={value}
-                label={GROUP_LABELS[value]}
+                label={MUSCLE_GROUP_LABELS[value]}
                 selected={effectiveScope.kind === 'group' && effectiveScope.group === value}
                 onPress={() =>
                   setScope(
@@ -279,7 +268,7 @@ function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () =>
       <View style={{ flex: 1 }}>
         <Text variant="body">{exercise.name}</Text>
         <Text variant="caption" color="muted">
-          {GROUP_LABELS[exercise.muscleGroup]}
+          {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
           {exercise.isBodyweight ? ' · bodyweight' : ''}
         </Text>
       </View>
@@ -343,7 +332,7 @@ function CreateRow({
           {MUSCLE_GROUPS.map((value) => (
             <Chip
               key={value}
-              label={GROUP_LABELS[value]}
+              label={MUSCLE_GROUP_LABELS[value]}
               selected={group === value}
               onPress={() => setGroup(value)}
             />

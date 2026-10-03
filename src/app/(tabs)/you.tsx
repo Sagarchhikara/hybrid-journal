@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { useTheme } from '@/theme';
 
 export default function YouScreen() {
   const { spacing } = useTheme();
+  const router = useRouter();
 
   return (
     <Screen scroll>
@@ -16,6 +18,15 @@ export default function YouScreen() {
       </Text>
 
       <UnitsSection />
+
+      <View style={{ marginTop: spacing.xxl, gap: spacing.md }}>
+        <Text variant="heading">Library</Text>
+        <Button
+          label="Exercise library"
+          variant="secondary"
+          onPress={() => router.push('/library')}
+        />
+      </View>
 
       <Text color="muted" style={{ marginTop: spacing.xxl }}>
         Reminders and data export will live here.

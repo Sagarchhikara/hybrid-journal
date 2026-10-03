@@ -44,10 +44,25 @@ export default function RootLayout() {
 }
 
 function RootStack() {
+  const { colors, typography } = useTheme();
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="log" options={{ presentation: 'modal' }} />
+      {/* Pushed from You, so it needs the back button a header gives it. */}
+      <Stack.Screen
+        name="library"
+        options={{
+          headerShown: true,
+          title: 'Exercise library',
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { ...typography.heading, color: colors.text },
+          headerTintColor: colors.accent,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      />
     </Stack>
   );
 }
