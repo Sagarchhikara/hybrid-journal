@@ -105,8 +105,15 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
            * rather than a restyle, so the strip shows what already exists and stops.
            */
           <StatRow>
-            <Stat label="Sets" value={String(validSets)} tint="gym" muted={validSets === 0} />
             <Stat
+              size="small"
+              label="Sets"
+              value={String(validSets)}
+              tint="gym"
+              muted={validSets === 0}
+            />
+            <Stat
+              size="small"
               label="Exercises"
               value={String(draft.exercises.length)}
               tint="gym"

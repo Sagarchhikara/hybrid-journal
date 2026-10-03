@@ -69,10 +69,14 @@ function DevTools() {
 
   return (
     <Section title="Developer" style={{ marginTop: spacing.xxl }}>
+      {/* Two by two, not four across: four columns on a 360dp screen leaves about
+          62dp each, which is narrower than the word "Workouts". */}
       <Card style={{ gap: spacing.lg }}>
         <StatRow>
           <Stat label="Workouts" value={String(counts.workouts)} tint="gym" />
           <Stat label="Runs" value={String(counts.runs)} tint="run" />
+        </StatRow>
+        <StatRow>
           <Stat label="Nights" value={String(counts.sleepEntries)} tint="sleep" />
           <Stat label="Lifts" value={String(counts.exercises)} />
         </StatRow>
