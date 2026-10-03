@@ -10,7 +10,7 @@ import { todayLocal, type DateKey } from '@/lib/dates';
 import { formatDateKeyShort } from '@/lib/dates';
 import { useTheme } from '@/theme';
 
-import { createDraft, draftReducer, type WorkoutDraft } from './draft';
+import { createDraft, draftReducer, isSetBlank, type WorkoutDraft } from './draft';
 import { WORKOUT_NAME_PRESETS } from './workout-names';
 
 /** Where the logging screen lives, as a typed route. */
@@ -59,8 +59,38 @@ export function GymStartScreen() {
     }
   }
 
+  /**
+   * Starting a workout overwrites the draft slot, so anything in progress is gone.
+   * A red line of text under the button was not enough: the tap destroys work, and
+   * destroying work asks first.
+   */
+  function confirmReplace(next: WorkoutDraft): void {
+    if (!draft) {
+      void start(next);
+      return;
+    }
+
+    const inProgress = draft.name.trim() === '' ? 'The workout in progress' : `Your ${draft.name}`;
+    const sets = draft.exercises.reduce(
+      (total, exercise) => total + exercise.sets.filter((set) => !isSetBlank(set)).length,
+      0,
+    );
+
+    Alert.alert(
+      'Replace the workout in progress?',
+      `${inProgress} from ${formatDateKeyShort(draft.date)} will be discarded${
+        sets > 0 ? `, including ${sets} logged ${sets === 1 ? 'set' : 'sets'}` : ''
+      }.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Resume it instead', onPress: () => router.push(SESSION_ROUTE) },
+        { text: 'Replace', style: 'destructive', onPress: () => void start(next) },
+      ],
+    );
+  }
+
   function startEmpty(): void {
-    void start(createDraft({ date, name: name.trim() }));
+    confirmReplace(createDraft({ date, name: name.trim() }));
   }
 
   /** Copies the exercise list of the last workout with this name. Sets stay empty. */
@@ -78,7 +108,7 @@ export function GymStartScreen() {
         },
       });
     }
-    void start(next);
+    confirmReplace(next);
   }
 
   function confirmDiscardDraft(): void {
