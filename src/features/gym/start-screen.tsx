@@ -2,7 +2,18 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 
-import { Button, Card, Chip, DateField, Field, FormScreen, Text, TextField } from '@/components';
+import {
+  Button,
+  Card,
+  Chip,
+  DateField,
+  Field,
+  FormScreen,
+  Stat,
+  StatRow,
+  Text,
+  TextField,
+} from '@/components';
 import { useDbQuery } from '@/db';
 import { getLastWorkoutByName } from '@/db/queries/gym';
 import { clearGymDraft, readGymDraft, writeGymDraft } from '@/db/queries/gym-draft';
@@ -38,6 +49,15 @@ export function GymStartScreen() {
     [name.trim()],
   );
 
+  // The same count the replace confirmation already computes, so the card and that
+  // alert can never disagree about how much work is at stake.
+  const draftSets = draft
+    ? draft.exercises.reduce(
+        (total, exercise) => total + exercise.sets.filter((set) => !isSetBlank(set)).length,
+        0,
+      )
+    : 0;
+
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center' }}>
@@ -71,10 +91,7 @@ export function GymStartScreen() {
     }
 
     const inProgress = draft.name.trim() === '' ? 'The workout in progress' : `Your ${draft.name}`;
-    const sets = draft.exercises.reduce(
-      (total, exercise) => total + exercise.sets.filter((set) => !isSetBlank(set)).length,
-      0,
-    );
+    const sets = draftSets;
 
     Alert.alert(
       'Replace the workout in progress?',
@@ -127,18 +144,28 @@ export function GymStartScreen() {
   return (
     <FormScreen>
       {draft ? (
-        <Card accent="gym">
-          <Text variant="heading">Workout in progress</Text>
-          <Text color="muted">
-            {draft.name.trim() === '' ? 'Unnamed' : draft.name} · {formatDateKeyShort(draft.date)} ·{' '}
-            {draft.exercises.length} {draft.exercises.length === 1 ? 'exercise' : 'exercises'}
-          </Text>
-          <Button
-            label="Resume workout"
-            onPress={() => router.push(SESSION_ROUTE)}
-            style={{ marginTop: spacing.sm }}
-          />
-          <Button label="Discard it" variant="secondary" onPress={confirmDiscardDraft} />
+        <Card accent="gym" style={{ gap: spacing.lg }}>
+          <View style={{ gap: spacing.xxs }}>
+            <Text variant="heading">Workout in progress</Text>
+            <Text variant="caption" color="muted">
+              {draft.name.trim() === '' ? 'Unnamed' : draft.name} · {formatDateKeyShort(draft.date)}
+            </Text>
+          </View>
+
+          <StatRow>
+            <Stat
+              label="Exercises"
+              value={String(draft.exercises.length)}
+              tint="gym"
+              muted={draft.exercises.length === 0}
+            />
+            <Stat label="Sets" value={String(draftSets)} tint="gym" muted={draftSets === 0} />
+          </StatRow>
+
+          <View style={{ gap: spacing.sm }}>
+            <Button label="Resume workout" onPress={() => router.push(SESSION_ROUTE)} />
+            <Button label="Discard it" variant="danger" onPress={confirmDiscardDraft} />
+          </View>
         </Card>
       ) : null}
 

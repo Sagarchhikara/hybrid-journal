@@ -2,7 +2,18 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, View } from 'react-native';
 
-import { Button, DateField, Field, FormScreen, Icon, Text, TextField } from '@/components';
+import {
+  Button,
+  DateField,
+  EmptyState,
+  Field,
+  FormScreen,
+  Icon,
+  Stat,
+  StatRow,
+  Text,
+  TextField,
+} from '@/components';
 import { deleteWorkout } from '@/db/queries/gym';
 import { useTheme } from '@/theme';
 
@@ -85,6 +96,24 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
     <>
       <FormScreen
         adjustKeyboardInsets
+        header={
+          /*
+           * Sets and exercises only.
+           *
+           * Duration is not recorded anywhere — a draft has no start time — and volume
+           * is not computed by anything in the app today. Both would be new computation
+           * rather than a restyle, so the strip shows what already exists and stops.
+           */
+          <StatRow>
+            <Stat label="Sets" value={String(validSets)} tint="gym" muted={validSets === 0} />
+            <Stat
+              label="Exercises"
+              value={String(draft.exercises.length)}
+              tint="gym"
+              muted={draft.exercises.length === 0}
+            />
+          </StatRow>
+        }
         footer={
           <>
             {session.error ? (
@@ -107,14 +136,14 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <Button
                 label={editing ? 'Discard changes' : 'Discard'}
-                variant="secondary"
+                variant="danger"
                 onPress={confirmDiscard}
                 style={{ flex: 1 }}
               />
               {editing ? (
                 <Button
                   label="Delete workout"
-                  variant="secondary"
+                  variant="danger"
                   onPress={confirmDelete}
                   style={{ flex: 1 }}
                 />
@@ -136,12 +165,11 @@ export function SessionScreen({ workoutId }: SessionScreenProps) {
         </Field>
 
         {draft.exercises.length === 0 ? (
-          <View style={{ gap: spacing.sm, paddingVertical: spacing.xl, alignItems: 'center' }}>
-            <Icon name="gym" size={icons.empty} color="muted" />
-            <Text color="muted" style={{ textAlign: 'center' }}>
-              Add your first exercise to start logging sets.
-            </Text>
-          </View>
+          <EmptyState
+            icon="gym"
+            title="No exercises yet"
+            body="Add your first exercise to start logging sets."
+          />
         ) : (
           <View style={{ gap: spacing.lg }}>
             {draft.exercises.map((exercise, index) => (

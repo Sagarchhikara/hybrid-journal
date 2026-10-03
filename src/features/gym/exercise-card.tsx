@@ -79,16 +79,14 @@ export function ExerciseCard({
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
         <View style={{ flex: 1, gap: spacing.xxs }}>
-          <Text variant="heading">{exercise.name}</Text>
-          {recall ? (
-            <Text variant="caption" color="muted">
-              {recall}
-            </Text>
-          ) : (
-            <Text variant="caption" color="muted">
-              First time logging this
-            </Text>
-          )}
+          {/* The exercise name is the card's subject, so it is set in lime: on a screen
+              of five near-identical cards it is what you scroll looking for. */}
+          <Text variant="heading" color="gym">
+            {exercise.name}
+          </Text>
+          <Text variant="caption" color="muted">
+            {recall ?? 'First time logging this'}
+          </Text>
         </View>
 
         <IconAction
@@ -135,19 +133,17 @@ export function ExerciseCard({
         ))}
       </View>
 
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <TextAction
-          label="Add set"
-          icon="plus"
-          onPress={() =>
-            dispatch({
-              type: 'addSet',
-              exerciseLocalId,
-              fallback: fallbackFor(exercise.sets.length),
-            })
-          }
-        />
-      </View>
+      <TextAction
+        label="Add set"
+        icon="plus"
+        onPress={() =>
+          dispatch({
+            type: 'addSet',
+            exerciseLocalId,
+            fallback: fallbackFor(exercise.sets.length),
+          })
+        }
+      />
     </View>
   );
 }
@@ -163,7 +159,7 @@ function IconAction({
   onPress: () => void;
   disabled?: boolean;
 }) {
-  const { spacing, sizes, icons } = useTheme();
+  const { colors, radii, spacing, sizes, icons } = useTheme();
 
   return (
     <Pressable
@@ -176,9 +172,11 @@ function IconAction({
       style={({ pressed }) => ({
         width: sizes.iconButton,
         height: sizes.iconButton,
+        borderRadius: radii.pill,
+        backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: disabled ? 0.25 : pressed ? 0.5 : 1,
+        opacity: disabled ? 0.25 : 1,
       })}>
       <Icon name={icon} size={icons.md} color="muted" />
     </Pressable>
@@ -204,17 +202,18 @@ function TextAction({
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: spacing.xs,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
         minHeight: sizes.tapTarget,
-        backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
+        backgroundColor: pressed ? colors.accentSurface : colors.surfaceRaised,
         borderColor: colors.border,
         borderWidth: borderWidths.hairline,
-        borderRadius: radii.pill,
+        borderRadius: radii.md,
       })}>
       {icon ? <Icon name={icon} size={icons.xs} color="accent" /> : null}
-      <Text variant="label" color="accent">
+      <Text variant="labelStrong" color="accent">
         {label}
       </Text>
     </Pressable>

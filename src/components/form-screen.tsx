@@ -6,6 +6,11 @@ import { useTheme } from '@/theme';
 
 export interface FormScreenProps {
   children: ReactNode;
+  /**
+   * Pinned above the scroll area — a summary strip that should stay readable while the
+   * form scrolls under it.
+   */
+  header?: ReactNode;
   /** Pinned below the scroll area and above the keyboard — usually the save button. */
   footer?: ReactNode;
   /**
@@ -21,7 +26,12 @@ export interface FormScreenProps {
  * small screen, which is the difference between logging a run in 20 seconds and
  * scrolling around hunting for Save.
  */
-export function FormScreen({ children, footer, adjustKeyboardInsets = false }: FormScreenProps) {
+export function FormScreen({
+  children,
+  header,
+  footer,
+  adjustKeyboardInsets = false,
+}: FormScreenProps) {
   const { colors, spacing, borderWidths } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -29,6 +39,19 @@ export function FormScreen({ children, footer, adjustKeyboardInsets = false }: F
     <KeyboardAvoidingView
       style={[styles.fill, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {header ? (
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingVertical: spacing.md,
+            borderBottomWidth: borderWidths.hairline,
+            borderBottomColor: colors.divider,
+            backgroundColor: colors.background,
+          }}>
+          {header}
+        </View>
+      ) : null}
+
       <ScrollView
         style={styles.fill}
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl }}

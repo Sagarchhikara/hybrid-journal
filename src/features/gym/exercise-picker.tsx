@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Button, Chip, Icon, SegmentedControl, Text, TextField } from '@/components';
+import {
+  Button,
+  Chip,
+  EmptyState,
+  Icon,
+  ListRow,
+  Section,
+  SegmentedControl,
+  Text,
+  TextField,
+} from '@/components';
 import { useDbQuery } from '@/db';
 import { createOrGetExercise, getRecentExerciseIds, searchExercises } from '@/db/queries/exercises';
 import { normalizeExerciseName } from '@/db/exercise-library';
@@ -168,7 +178,7 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
         contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl * 2 }}
         keyboardShouldPersistTaps="handled">
         {recent.length > 0 ? (
-          <Section title="Recently used">
+          <Section title="Recently used" style={{ marginTop: spacing.lg }}>
             {recent.map((exercise) => (
               <ExerciseRow key={exercise.id} exercise={exercise} onPress={() => pick(exercise)} />
             ))}
@@ -177,6 +187,7 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
 
         {rest.length > 0 ? (
           <Section
+            style={{ marginTop: spacing.lg }}
             title={
               recent.length > 0
                 ? effectiveScope.kind === 'all'
@@ -202,24 +213,37 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
           />
         ) : null}
 
+        {/* A filtered search that finds nothing is a dead end without the widening
+            button, so it stays available even when the create form is offered above. */}
         {matches !== undefined && matches.length === 0 ? (
-          <View style={{ marginTop: spacing.xl, gap: spacing.md, alignItems: 'center' }}>
-            {canCreate ? null : (
-              <Text color="muted" style={{ textAlign: 'center' }}>
-                {effectiveScope.kind === 'all'
-                  ? 'Nothing matches that.'
-                  : `No ${filterLabel} exercises match that.`}
-              </Text>
-            )}
-            {/* A filtered search that finds nothing is a dead end without this. */}
-            {effectiveScope.kind === 'all' ? null : (
+          canCreate ? (
+            effectiveScope.kind === 'all' ? null : (
               <Button
                 label="Search all exercises"
                 variant="secondary"
                 onPress={() => setScope({ kind: 'all' })}
+                style={{ marginTop: spacing.lg }}
               />
-            )}
-          </View>
+            )
+          ) : (
+            <EmptyState
+              icon="search"
+              title={
+                effectiveScope.kind === 'all'
+                  ? 'Nothing matches that'
+                  : `No ${filterLabel} exercises match that`
+              }
+              action={
+                effectiveScope.kind === 'all' ? undefined : (
+                  <Button
+                    label="Search all exercises"
+                    variant="secondary"
+                    onPress={() => setScope({ kind: 'all' })}
+                  />
+                )
+              }
+            />
+          )
         ) : null}
       </ScrollView>
 
@@ -238,50 +262,18 @@ export function ExercisePicker({ onPick, onCancel, workoutName }: ExercisePicker
   );
 }
 
-function Section({ title, children }: { title?: string; children: React.ReactNode }) {
-  const { spacing } = useTheme();
-
-  return (
-    <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
-      {title ? (
-        <Text variant="label" color="muted">
-          {title.toUpperCase()}
-        </Text>
-      ) : null}
-      {children}
-    </View>
-  );
-}
-
 function ExerciseRow({ exercise, onPress }: { exercise: Exercise; onPress: () => void }) {
-  const { colors, radii, spacing, sizes, icons, borderWidths } = useTheme();
+  const { icons } = useTheme();
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <ListRow
+      title={exercise.name}
+      subtitle={`${MUSCLE_GROUP_LABELS[exercise.muscleGroup]}${exercise.isBodyweight ? ' · bodyweight' : ''}`}
       accessibilityLabel={`Add ${exercise.name}`}
       onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderColor: colors.border,
-        borderWidth: borderWidths.hairline,
-        borderRadius: radii.md,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        minHeight: sizes.row,
-      })}>
-      <View style={{ flex: 1 }}>
-        <Text variant="body">{exercise.name}</Text>
-        <Text variant="caption" color="muted">
-          {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
-          {exercise.isBodyweight ? ' · bodyweight' : ''}
-        </Text>
-      </View>
-      <Icon name="plus" size={icons.sm} color="accent" />
-    </Pressable>
+      // A plus, not a chevron: tapping this adds the lift, it does not open anything.
+      trailing={<Icon name="plus" size={icons.sm} color="accent" />}
+    />
   );
 }
 

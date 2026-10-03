@@ -103,7 +103,10 @@ export function SetRow({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         {/* A drop continues the set above rather than being a set of its own, so it is
             marked instead of numbered. */}
-        <Text variant="label" color="muted" style={{ width: INDEX_WIDTH }}>
+        <Text
+          variant={set.isDropSet ? 'label' : 'labelStrong'}
+          color={set.isDropSet ? 'muted' : 'text'}
+          style={{ width: INDEX_WIDTH }}>
           {set.isDropSet ? '↳' : index + 1}
         </Text>
 
@@ -198,7 +201,7 @@ function StepButton({ direction, onPress }: { direction: 1 | -1; onPress: () => 
         height: STEP_SIZE,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: pressed ? colors.accent : colors.surfaceRaised,
+        backgroundColor: pressed ? colors.accentSurface : colors.surfaceRaised,
         borderColor: colors.border,
         borderWidth: borderWidths.hairline,
         borderRadius: radii.md,
@@ -238,7 +241,11 @@ function SmallAction({
         paddingHorizontal: spacing.sm,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: active ? colors.accent : colors.surface,
+        backgroundColor: active
+          ? colors.accent
+          : danger
+            ? colors.dangerSurface
+            : colors.surfaceRaised,
         borderColor: danger ? colors.danger : colors.border,
         borderWidth: borderWidths.hairline,
         borderRadius: radii.sm,
@@ -247,7 +254,7 @@ function SmallAction({
       {icon ? (
         <Icon name={icon} size={icons.xs} color={danger ? 'danger' : 'muted'} />
       ) : (
-        <Text variant="caption" color={active ? 'accentText' : 'muted'}>
+        <Text variant={active ? 'labelStrong' : 'caption'} color={active ? 'accentText' : 'muted'}>
           {label}
         </Text>
       )}
