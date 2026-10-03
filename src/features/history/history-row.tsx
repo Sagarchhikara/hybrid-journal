@@ -16,10 +16,12 @@ import { historyEntryTitle, summarizeHistoryEntry } from './summarize';
 function presentation(entry: HistoryEntry): { icon: IconName; color: ColorToken; href: Href } {
   switch (entry.kind) {
     case 'gym':
+      // A read-only view rather than the editor: reading back what you lifted should not
+      // look the same as changing it. Edit is a button inside that screen.
       return {
         icon: 'gym',
         color: 'gym',
-        href: `/log/gym/session?workoutId=${entry.workout.workoutId}`,
+        href: `/workout/${entry.workout.workoutId}`,
       };
     case 'run':
       return { icon: 'run', color: 'run', href: `/log/run?runId=${entry.run.id}` };

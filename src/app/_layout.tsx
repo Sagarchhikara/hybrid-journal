@@ -46,23 +46,22 @@ export default function RootLayout() {
 function RootStack() {
   const { colors, typography } = useTheme();
 
+  const pushedScreen = {
+    headerShown: true,
+    headerStyle: { backgroundColor: colors.background },
+    headerTitleStyle: { ...typography.heading, color: colors.text },
+    headerTintColor: colors.accent,
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: colors.background },
+  } as const;
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="log" options={{ presentation: 'modal' }} />
-      {/* Pushed from You, so it needs the back button a header gives it. */}
-      <Stack.Screen
-        name="library"
-        options={{
-          headerShown: true,
-          title: 'Exercise library',
-          headerStyle: { backgroundColor: colors.background },
-          headerTitleStyle: { ...typography.heading, color: colors.text },
-          headerTintColor: colors.accent,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      />
+      {/* Pushed from a tab, so these need the back button a header gives them. */}
+      <Stack.Screen name="library" options={{ ...pushedScreen, title: 'Exercise library' }} />
+      <Stack.Screen name="workout/[id]" options={{ ...pushedScreen, title: 'Workout' }} />
     </Stack>
   );
 }
