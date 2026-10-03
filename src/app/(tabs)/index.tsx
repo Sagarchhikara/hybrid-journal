@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { Button, Screen, Text } from '@/components';
-import { WeekCard } from '@/features/home';
+import { ResumeBanner, WeekCard } from '@/features/home';
 import { formatDateKeyLong, todayLocal } from '@/lib/dates';
 import { useTheme } from '@/theme';
 
@@ -16,6 +16,8 @@ export default function HomeScreen() {
         <Text variant="display">Today</Text>
         <Text color="muted">{formatDateKeyLong(todayLocal())}</Text>
       </View>
+
+      <ResumeBanner />
 
       <WeekCard />
 
